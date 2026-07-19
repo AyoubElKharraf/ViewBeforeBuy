@@ -128,10 +128,6 @@ npm >= 9.0.0
 
 ### Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/ViewBeforeBuy.git
-
 # Navigate to project directory
 cd ViewBeforeBuy
 
