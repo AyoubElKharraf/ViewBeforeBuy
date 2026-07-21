@@ -1,8 +1,10 @@
 # ViewBeforeBuy
 
-Plateforme immobilière marocaine (PERN) : visualisation 3D, assistant intelligent et outils fintech.
+Plateforme immobilière marocaine : visualisation 3D, assistant intelligent et outils fintech.
 
-## Architecture
+> Acheter un bien au Maroc prend **6 à 18 mois** en moyenne. ViewBeforeBuy combine **3D**, **IA** et **Fintech** pour accélérer ce parcours.
+
+## Architecture PERN
 
 ```text
 frontend/   # Next.js (App Router) + React + Tailwind
@@ -14,21 +16,36 @@ database/   # Prisma + PostgreSQL
 Browser → Next.js → HTTP /api → Express → Prisma → PostgreSQL
 ```
 
+## Fonctionnalités
+
+### Espace Agence (B2B)
+- Dashboard analytics
+- Gestion des biens
+- Conversations IA
+- Aperçu 3D (placeholder)
+- Upload de documents
+
+### Espace Client (B2C)
+- Biens en vedette
+- Simulateur de crédit
+- Comparateur bancaire (CIH, Attijariwafa, BMCE)
+- Score d'éligibilité (règle BAM 33 %)
+- Conseils IA
+
 ## Prérequis
 
 - Node.js 20+
-- PostgreSQL (ou Docker)
-- Clé API optionnelle pour l'assistant : `LOVABLE_API_KEY`
+- PostgreSQL (Docker recommandé)
+- Clé API optionnelle : `LOVABLE_API_KEY`
 
 ## Setup
 
 ```sh
-# 1. PostgreSQL
+# 1. PostgreSQL (port 5433 pour éviter un Postgres local sur 5432)
 docker compose up -d
 
 # 2. Environnement
 cp .env.example .env
-# Éditer LOVABLE_API_KEY si besoin
 
 # 3. Installer + migrer + seed
 npm install
@@ -75,3 +92,22 @@ npm run dev
 | `/` | Landing |
 | `/agency` | Espace agence |
 | `/client` | Espace acheteur |
+
+## Hackathon
+
+Projet réalisé au **DiNext'26** — 2<sup>e</sup> place — Université Mohammed Premier, Oujda.
+
+| | |
+| --- | --- |
+| **Équipe** | Ayoub El Kharraf · Amine Ghayout |
+| **Thème** | Digital · AI · Fintech |
+
+## License
+
+MIT
+
+---
+
+**ViewBeforeBuy** — *Visualise. Analyse. Finance.*
+
+Made with love in Oujda, Morocco.
