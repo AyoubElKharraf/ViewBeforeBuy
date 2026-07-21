@@ -99,7 +99,6 @@ Projet réalisé au **DiNext'26** — 2<sup>e</sup> place — Université Mohamm
 
 | | |
 | --- | --- |
-| **Équipe** | Ayoub El Kharraf · Amine Ghayout |
 | **Thème** | Digital · AI · Fintech |
 
 ## License
