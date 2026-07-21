@@ -1,0 +1,31 @@
+{
+  "name": "@viewbeforebuy/frontend",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "framer-motion": "^12.42.2",
+    "lucide-react": "^0.575.0",
+    "next": "^15.4.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tw-animate-css": "^1.3.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/node": "^22.16.5",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.32.0",
+    "eslint-config-next": "^15.4.2",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.8.3"
+  }
+}

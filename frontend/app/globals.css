@@ -1,0 +1,154 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@source "../app";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans: "Jost", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  /* Agency-specific */
+  --color-agency-bg: var(--agency-bg);
+  --color-agency-bg-2: var(--agency-bg-2);
+  --color-agency-card: var(--agency-card);
+  --color-agency-border: var(--agency-border);
+  --color-agency-text: var(--agency-text);
+  --color-agency-text-muted: var(--agency-text-muted);
+  --color-agency-accent: var(--agency-accent);
+  --color-agency-accent-light: var(--agency-accent-light);
+
+  /* Client-specific */
+  --color-client-bg: var(--client-bg);
+  --color-client-card: var(--client-card);
+  --color-client-border: var(--client-border);
+  --color-client-text: var(--client-text);
+  --color-client-text-muted: var(--client-text-muted);
+  --color-client-gold: var(--client-gold);
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* Brand blue — shared across landing, agency, client */
+  --brand: oklch(0.6 0.22 258);
+  --brand-light: oklch(0.68 0.19 258);
+
+  /* Base */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.15 0.02 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 260);
+  --primary: var(--brand);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.97 0.01 258);
+  --secondary-foreground: oklch(0.2 0.04 260);
+  --muted: oklch(0.96 0.01 258);
+  --muted-foreground: oklch(0.55 0.03 260);
+  --accent: oklch(0.96 0.01 258);
+  --accent-foreground: oklch(0.2 0.04 260);
+  --destructive: oklch(0.62 0.24 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.92 0.01 260);
+  --input: oklch(0.92 0.01 260);
+  --ring: var(--brand);
+  --success: oklch(0.68 0.16 155);
+  --warning: oklch(0.78 0.16 75);
+  --danger: oklch(0.62 0.24 27);
+
+  /* Agency dark tokens */
+  --agency-bg: oklch(0.14 0.03 260);
+  --agency-bg-2: oklch(0.19 0.03 260);
+  --agency-card: oklch(0.22 0.03 260);
+  --agency-border: oklch(0.32 0.02 260);
+  --agency-text: oklch(0.98 0.005 250);
+  --agency-text-muted: oklch(0.68 0.02 260);
+  --agency-accent: var(--brand);
+  --agency-accent-light: var(--brand-light);
+
+  /* Client light tokens — same brand blue */
+  --client-bg: oklch(0.97 0.01 258);
+  --client-card: oklch(0.99 0.005 258);
+  --client-border: oklch(0.88 0.02 258);
+  --client-text: oklch(0.2 0.03 260);
+  --client-text-muted: oklch(0.5 0.02 260);
+  --client-gold: var(--brand);
+}
+
+.dark {
+  --background: oklch(0.14 0.03 260);
+  --foreground: oklch(0.98 0.005 250);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.02em;
+  }
+}
+
+@utility agency-surface {
+  background-color: var(--color-agency-bg);
+  color: var(--color-agency-text);
+}
+@utility agency-card {
+  background-color: color-mix(in oklab, white 5%, transparent);
+  border: 1px solid var(--color-agency-border);
+  backdrop-filter: blur(8px);
+}
+@utility client-surface {
+  background-color: var(--color-client-bg);
+  color: var(--color-client-text);
+}
+@utility client-card {
+  background-color: color-mix(in oklab, white 60%, var(--color-client-bg));
+  border: 1px solid var(--color-client-border);
+}
+@utility gradient-text {
+  background: linear-gradient(135deg, var(--brand), var(--brand-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@viewbeforebuy/backend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/server.js",
+  "scripts": {
+    "dev": "tsx watch --env-file=../.env src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node --env-file=../.env dist/server.js",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.12",
+    "@viewbeforebuy/database": "*",
+    "ai": "^7.0.31",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.16.5",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

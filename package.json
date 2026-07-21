@@ -1,0 +1,27 @@
+{
+  "name": "viewbeforebuy",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "database"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,api -c cyan,magenta \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "npm run dev -w @viewbeforebuy/frontend",
+    "dev:backend": "npm run dev -w @viewbeforebuy/backend",
+    "build": "npm run build -w @viewbeforebuy/database && npm run build -w @viewbeforebuy/backend && npm run build -w @viewbeforebuy/frontend",
+    "start": "concurrently -n web,api -c cyan,magenta \"npm run start -w @viewbeforebuy/frontend\" \"npm run start -w @viewbeforebuy/backend\"",
+    "lint": "npm run lint -w @viewbeforebuy/frontend && npm run lint -w @viewbeforebuy/backend",
+    "db:generate": "npm run generate -w @viewbeforebuy/database",
+    "db:migrate": "dotenv -e .env -- npm run migrate -w @viewbeforebuy/database",
+    "db:seed": "dotenv -e .env -- npm run seed -w @viewbeforebuy/database",
+    "db:studio": "dotenv -e .env -- npm run studio -w @viewbeforebuy/database",
+    "postinstall": "npm run db:generate || echo Prisma generate skipped (file may be locked). Run: npm run db:generate"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "dotenv-cli": "^8.0.0",
+    "typescript": "^5.8.3"
+  }
+}

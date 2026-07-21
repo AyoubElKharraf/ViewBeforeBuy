@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MessageRole {
+  user
+  assistant
+}
+
+model Property {
+  id            String         @id
+  name          String
+  type          String
+  city          String
+  neighborhood  String
+  price         Int
+  superficie    Int
+  rooms         Int
+  bathrooms     Int
+  floor         Int
+  locationScore Float
+  status        String
+  description   String
+  conversations Conversation[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Conversation {
+  id           String    @id
+  propertyId   String
+  property     Property  @relation(fields: [propertyId], references: [id])
+  propertyName String
+  propertyType String
+  lastMessage  String
+  timestamp    String
+  unread       Boolean   @default(false)
+  messages     Message[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String
+  timestamp      String
+  createdAt      DateTime     @default(now())
+}
+
+model Bank {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  rate           Float
+  maxDuration    Int
+  minDownPayment Int
+  logo           String
+  recommended    Boolean  @default(false)
+  features       String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
