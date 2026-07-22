@@ -8,7 +8,9 @@ import {
 } from "../controllers/conversations.js";
 import { createCheckoutHandler } from "../controllers/payments.js";
 import { getPropertiesHandler, getPropertyHandler } from "../controllers/properties.js";
+import { uploadPropertyImageHandler } from "../controllers/storage.js";
 import { protect } from "../shared/middlewares/auth.js";
+import { upload } from "../shared/middlewares/upload.js";
 import { authRouter } from "./auth.js";
 
 export const apiRouter = Router();
@@ -17,6 +19,7 @@ apiRouter.use("/auth", authRouter);
 
 apiRouter.get("/properties", getPropertiesHandler);
 apiRouter.get("/properties/:id", getPropertyHandler);
+apiRouter.post("/properties/:id/image", protect, upload.single("image"), uploadPropertyImageHandler);
 
 apiRouter.get("/conversations", getConversationsHandler);
 apiRouter.get("/conversations/:id", getConversationHandler);

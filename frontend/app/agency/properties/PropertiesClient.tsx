@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { MapPin, Plus } from "lucide-react";
-import { type Property } from "@/lib/api";
+import { useMemo, useRef, useState } from "react";
+import { MapPin, Plus, Upload, Loader2 } from "lucide-react";
+import { ApiError, getToken, uploadPropertyImage, type Property } from "@/lib/api";
 import { formatPrice } from "@/utils/types";
 
 export default function PropertiesClient({ properties }: { properties: Property[] }) {
@@ -64,12 +64,37 @@ export default function PropertiesClient({ properties }: { properties: Property[
 }
 
 function PropertyCard({ p }: { p: Property }) {
+  const [imageUrl, setImageUrl] = useState<string | null | undefined>(p.imageUrl);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const statusColor =
     p.status === "Disponible"
       ? "bg-emerald-500/20 text-emerald-400"
       : p.status === "Vendu"
         ? "bg-red-500/20 text-red-400"
         : "bg-amber-500/20 text-amber-400";
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    if (!getToken()) {
+      setError("Connectez-vous pour uploader une image.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const updated = await uploadPropertyImage(p.id, file);
+      setImageUrl(updated.imageUrl);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Échec de l'upload.");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
 
   return (
     <div className="agency-card rounded-xl overflow-hidden hover:border-white/20 transition">
@@ -79,13 +104,42 @@ function PropertyCard({ p }: { p: Property }) {
           background: "linear-gradient(135deg, oklch(0.22 0.04 260), oklch(0.28 0.06 265))",
         }}
       >
-        <div className="text-6xl opacity-30">🏠</div>
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt={p.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="text-6xl opacity-30">🏠</div>
+        )}
         <span
           className={`absolute top-3 right-3 text-[10px] px-2 py-1 rounded-full ${statusColor}`}
         >
           {p.status}
         </span>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="absolute bottom-3 right-3 inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-md bg-black/50 text-white hover:bg-black/70 disabled:opacity-60"
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="w-3 h-3 animate-spin" /> Envoi...
+            </>
+          ) : (
+            <>
+              <Upload className="w-3 h-3" /> Photo
+            </>
+          )}
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFile}
+          className="hidden"
+        />
       </div>
+      {error && <p className="px-4 pt-2 text-[11px] text-red-400">{error}</p>}
       <div className="p-4">
         <div className="font-medium">{p.name}</div>
         <div className="flex items-center gap-1 text-xs text-white/60 mt-1">

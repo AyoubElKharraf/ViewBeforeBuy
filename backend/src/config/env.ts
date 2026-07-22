@@ -14,6 +14,11 @@ const EnvSchema = z.object({
   STRIPE_CURRENCY: z.string().default("mad"),
   STRIPE_DEPOSIT_PERCENT: z.coerce.number().min(1).max(100).default(10),
 
+  // Supabase Storage (étape 6) - laisser vide pour désactiver l'upload
+  SUPABASE_URL: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_BUCKET: z.string().default("properties"),
+
   // Auth (étape 2)
   JWT_SECRET: z.string().min(1).default("dev-secret-change-me"),
   JWT_EXPIRES_IN: z.string().default("7d"),

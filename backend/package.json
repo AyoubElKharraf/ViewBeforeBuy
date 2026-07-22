@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.12",
+    "@supabase/supabase-js": "^2.110.8",
     "@viewbeforebuy/database": "*",
     "ai": "^7.0.31",
     "bcryptjs": "^3.0.3",
@@ -23,6 +24,7 @@
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
+    "multer": "^2.2.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "rate-limit-redis": "^4.3.1",
@@ -38,6 +40,7 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.9",
+    "@types/multer": "^2.2.0",
     "@types/node": "^22.16.5",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",

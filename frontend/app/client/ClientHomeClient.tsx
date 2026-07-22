@@ -74,12 +74,17 @@ export default function ClientHomeClient({ properties }: { properties: Property[
                 className="w-64 shrink-0 client-card rounded-2xl overflow-hidden snap-start"
               >
                 <div
-                  className="aspect-video flex items-center justify-center text-4xl"
+                  className="aspect-video flex items-center justify-center text-4xl overflow-hidden"
                   style={{
                     background: "linear-gradient(135deg, oklch(0.88 0.03 65), oklch(0.82 0.04 70))",
                   }}
                 >
-                  🏠
+                  {p.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                  ) : (
+                    "🏠"
+                  )}
                 </div>
                 <div className="p-4">
                   <div className="font-medium text-[color:var(--color-client-text)]">{p.name}</div>

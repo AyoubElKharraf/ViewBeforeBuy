@@ -46,6 +46,7 @@ model Property {
   locationScore Float
   status        String
   description   String
+  imageUrl      String?
   conversations Conversation[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt

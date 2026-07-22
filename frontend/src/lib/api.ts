@@ -66,6 +66,7 @@ export type Property = {
   locationScore: number;
   status: string;
   description: string;
+  imageUrl?: string | null;
 };
 
 export type ConversationMessage = {
@@ -155,6 +156,28 @@ export function createCheckout(input: { propertyId: string; amount?: number }) {
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export async function uploadPropertyImage(propertyId: string, file: File) {
+  const token = getToken();
+  const form = new FormData();
+  form.append("image", file);
+  const res = await fetch(`${API_URL}/api/properties/${propertyId}/image`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: form,
+  });
+  if (!res.ok) {
+    let message = `Upload échoué (${res.status})`;
+    try {
+      const body = (await res.json()) as { error?: string };
+      if (body.error) message = body.error;
+    } catch {
+      /* ignore */
+    }
+    throw new ApiError(res.status, message);
+  }
+  return (await res.json()) as Property;
 }
 
 export function getProperties(filters?: { type?: string; city?: string }) {
