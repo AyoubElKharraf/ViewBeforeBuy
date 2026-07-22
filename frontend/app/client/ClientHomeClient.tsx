@@ -1,11 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { Star, MapPin, Search, ArrowRight } from "lucide-react";
-import { type Property } from "@/lib/api";
+import { useState } from "react";
+import { Star, MapPin, Search, ArrowRight, Loader2 } from "lucide-react";
+import { ApiError, createCheckout, getToken, type Property } from "@/lib/api";
 import { formatPrice } from "@/utils/types";
 
 export default function ClientHomeClient({ properties }: { properties: Property[] }) {
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleReserve(propertyId: string) {
+    setError(null);
+    if (!getToken()) {
+      setError("Connectez-vous pour réserver un bien.");
+      return;
+    }
+    setPendingId(propertyId);
+    try {
+      const { url } = await createCheckout({ propertyId });
+      if (url) {
+        window.location.href = url;
+      } else {
+        setError("Impossible de démarrer le paiement.");
+      }
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Erreur lors de la création du paiement.";
+      setError(message);
+    } finally {
+      setPendingId(null);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -66,11 +93,26 @@ export default function ClientHomeClient({ properties }: { properties: Property[
                       {p.locationScore}
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => handleReserve(p.id)}
+                    disabled={pendingId === p.id}
+                    className="mt-3 w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[color:var(--color-client-gold)] text-white text-sm hover:brightness-110 disabled:opacity-60"
+                  >
+                    {pendingId === p.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Redirection...
+                      </>
+                    ) : (
+                      "Réserver (acompte)"
+                    )}
+                  </button>
                 </div>
               </div>
             ))
           )}
         </div>
+        {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       </section>
 
       <section className="client-card rounded-2xl p-5">

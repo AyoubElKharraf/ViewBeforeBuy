@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Send, Building } from "lucide-react";
-import { postMessage, type Conversation } from "@/lib/api";
+import { postMessage, type Conversation, type ConversationMessage } from "@/lib/api";
+import { getSocket } from "@/lib/socket";
 import { useAI } from "@/hooks/useAI";
 
 export default function ConversationsClient({
@@ -21,6 +22,45 @@ export default function ConversationsClient({
     c.propertyName.toLowerCase().includes(q.toLowerCase()),
   );
 
+  // Écoute temps réel des nouveaux messages (Socket.io)
+  useEffect(() => {
+    const socket = getSocket();
+    const handler = ({
+      conversationId,
+      message,
+    }: {
+      conversationId: string;
+      message: ConversationMessage;
+    }) => {
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== conversationId) return c;
+          // Dédoublonnage par id
+          if (message.id && c.messages.some((m) => m.id === message.id)) return c;
+          return {
+            ...c,
+            lastMessage: message.content.slice(0, 60),
+            messages: [...c.messages, message],
+          };
+        }),
+      );
+    };
+    socket.on("message:new", handler);
+    return () => {
+      socket.off("message:new", handler);
+    };
+  }, []);
+
+  // Rejoint / quitte la room de la conversation active
+  useEffect(() => {
+    if (!activeId) return;
+    const socket = getSocket();
+    socket.emit("conversation:join", activeId);
+    return () => {
+      socket.emit("conversation:leave", activeId);
+    };
+  }, [activeId]);
+
   if (!active) {
     return (
       <div className="agency-card rounded-xl p-8 text-center text-white/60">
@@ -35,18 +75,8 @@ export default function ConversationsClient({
     setInput("");
     const now = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === activeId
-          ? {
-              ...c,
-              messages: [...c.messages, { role: "user", content: userMsg, timestamp: now }],
-            }
-          : c,
-      ),
-    );
-
     try {
+      // Le message s'affichera via l'écho temps réel (Socket.io)
       await postMessage(activeId, {
         role: "user",
         content: userMsg,
@@ -55,18 +85,6 @@ export default function ConversationsClient({
 
       const context = `Bien: ${active.propertyName} (${active.propertyType})`;
       const reply = await send(userMsg, context);
-
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === activeId
-            ? {
-                ...c,
-                lastMessage: reply.slice(0, 60),
-                messages: [...c.messages, { role: "assistant", content: reply, timestamp: now }],
-              }
-            : c,
-        ),
-      );
 
       await postMessage(activeId, {
         role: "assistant",

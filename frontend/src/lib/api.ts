@@ -1,5 +1,22 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
+const TOKEN_KEY = "vbb_token";
+
+export function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(TOKEN_KEY);
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -10,10 +27,12 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
     cache: "no-store",
@@ -79,6 +98,64 @@ export type Bank = {
 };
 
 export type ChatRole = "agency" | "client" | "report";
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  avatar: string | null;
+  role: string;
+  provider: string;
+};
+
+export type AuthResponse = {
+  user: AuthUser;
+  token: string;
+};
+
+export async function register(input: { email: string; password: string; name?: string }) {
+  const res = await request<AuthResponse>("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  setToken(res.token);
+  return res;
+}
+
+export async function login(input: { email: string; password: string }) {
+  const res = await request<AuthResponse>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  setToken(res.token);
+  return res;
+}
+
+export function getMe() {
+  return request<{ user: AuthUser }>("/api/auth/me");
+}
+
+export function logout() {
+  clearToken();
+}
+
+export function googleLoginUrl() {
+  return `${API_URL}/api/auth/google`;
+}
+
+export type CheckoutResponse = {
+  id: string;
+  url: string | null;
+  amount: number;
+  currency: string;
+};
+
+export function createCheckout(input: { propertyId: string; amount?: number }) {
+  return request<CheckoutResponse>("/api/payments/checkout", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
 
 export function getProperties(filters?: { type?: string; city?: string }) {
   const params = new URLSearchParams();

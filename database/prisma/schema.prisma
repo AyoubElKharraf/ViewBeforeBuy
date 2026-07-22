@@ -12,6 +12,26 @@ enum MessageRole {
   assistant
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  password   String?
+  name       String?
+  avatar     String?
+  provider   String   @default("local")
+  providerId String?
+  role       Role     @default(USER)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([provider, providerId])
+}
+
 model Property {
   id            String         @id
   name          String

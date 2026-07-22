@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
+import { logger } from "../shared/logger.js";
 
 export class HttpError extends Error {
   status: number;
@@ -29,6 +30,6 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
   }
 
   const message = err instanceof Error ? err.message : "Internal server error";
-  console.error(err);
+  logger.error(err instanceof Error ? `${err.message}\n${err.stack ?? ""}` : String(err));
   res.status(500).json({ error: message });
 }

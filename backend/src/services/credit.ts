@@ -1,4 +1,5 @@
 import { prisma } from "@viewbeforebuy/database";
+import { cached } from "../shared/redis.js";
 
 export interface CreditInput {
   propertyPrice: number;
@@ -93,11 +94,12 @@ export type BankDto = {
 };
 
 export async function listBanks(): Promise<BankDto[]> {
-  const banks = await prisma.bank.findMany({
-    orderBy: { rate: "asc" },
-  });
+  return cached("banks:list", 300, async () => {
+    const banks = await prisma.bank.findMany({
+      orderBy: { rate: "asc" },
+    });
 
-  return banks.map((bank: {
+    return banks.map((bank: {
     id: string;
     name: string;
     rate: number;
@@ -107,13 +109,14 @@ export async function listBanks(): Promise<BankDto[]> {
     recommended: boolean;
     features: string[];
   }) => ({
-    id: bank.id,
-    name: bank.name,
-    rate: bank.rate,
-    maxDuration: bank.maxDuration,
-    minDownPayment: bank.minDownPayment,
-    logo: bank.logo,
-    recommended: bank.recommended,
-    features: bank.features,
-  }));
+      id: bank.id,
+      name: bank.name,
+      rate: bank.rate,
+      maxDuration: bank.maxDuration,
+      minDownPayment: bank.minDownPayment,
+      logo: bank.logo,
+      recommended: bank.recommended,
+      features: bank.features,
+    }));
+  });
 }

@@ -6,6 +6,7 @@ import {
   listConversations,
 } from "../services/conversations.js";
 import { HttpError } from "../middleware/error.js";
+import { emitNewMessage } from "../shared/socket.js";
 
 const MessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -40,6 +41,8 @@ export async function postMessageHandler(req: Request, res: Response, next: Next
     const conversation = await getConversation(id);
     if (!conversation) throw new HttpError(404, "Conversation not found");
     const updated = await appendMessage(id, body);
+    const lastMessage = updated.messages[updated.messages.length - 1];
+    if (lastMessage) emitNewMessage(id, lastMessage);
     res.status(201).json(updated);
   } catch (err) {
     next(err);
