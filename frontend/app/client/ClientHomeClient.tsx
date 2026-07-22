@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Star, MapPin, Search, ArrowRight, Loader2 } from "lucide-react";
+import { Star, MapPin, Search, ArrowRight, Loader2, Move3d } from "lucide-react";
 import { ApiError, createCheckout, getToken, type Property } from "@/lib/api";
 import { formatPrice } from "@/utils/types";
+import Property3DModal from "@/components/Property3DModal";
 
 export default function ClientHomeClient({ properties }: { properties: Property[] }) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [view3d, setView3d] = useState<Property | null>(null);
 
   async function handleReserve(propertyId: string) {
     setError(null);
@@ -98,20 +100,29 @@ export default function ClientHomeClient({ properties }: { properties: Property[
                       {p.locationScore}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleReserve(p.id)}
-                    disabled={pendingId === p.id}
-                    className="mt-3 w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[color:var(--color-client-gold)] text-white text-sm hover:brightness-110 disabled:opacity-60"
-                  >
-                    {pendingId === p.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Redirection...
-                      </>
-                    ) : (
-                      "Réserver (acompte)"
-                    )}
-                  </button>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setView3d(p)}
+                      className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-lg border border-[color:var(--color-client-border)] text-sm hover:bg-black/5"
+                    >
+                      <Move3d className="w-4 h-4" /> 3D
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleReserve(p.id)}
+                      disabled={pendingId === p.id}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[color:var(--color-client-gold)] text-white text-sm hover:brightness-110 disabled:opacity-60"
+                    >
+                      {pendingId === p.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Redirection...
+                        </>
+                      ) : (
+                        "Réserver"
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -163,6 +174,13 @@ export default function ClientHomeClient({ properties }: { properties: Property[
           Simuler le crédit <ArrowRight className="w-4 h-4" />
         </Link>
       </section>
+
+      <Property3DModal
+        open={view3d !== null}
+        onClose={() => setView3d(null)}
+        propertyName={view3d?.name ?? ""}
+        accent="#c9a227"
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { MapPin, Plus, Upload, Loader2 } from "lucide-react";
 import { ApiError, getToken, uploadPropertyImage, type Property } from "@/lib/api";
 import { formatPrice } from "@/utils/types";
+import Property3DModal from "@/components/Property3DModal";
 
 export default function PropertiesClient({ properties }: { properties: Property[] }) {
   const [type, setType] = useState<string>("Tous");
@@ -67,6 +68,7 @@ function PropertyCard({ p }: { p: Property }) {
   const [imageUrl, setImageUrl] = useState<string | null | undefined>(p.imageUrl);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [show3D, setShow3D] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const statusColor =
@@ -154,7 +156,10 @@ function PropertyCard({ p }: { p: Property }) {
           <span>Étage {p.floor}</span>
         </div>
         <div className="flex gap-2 mt-4">
-          <button className="flex-1 py-1.5 text-xs rounded-md border border-white/10 hover:bg-white/5">
+          <button
+            onClick={() => setShow3D(true)}
+            className="flex-1 py-1.5 text-xs rounded-md border border-white/10 hover:bg-white/5"
+          >
             Voir 3D
           </button>
           <button className="flex-1 py-1.5 text-xs rounded-md bg-[color:var(--color-agency-accent)] text-white hover:brightness-110">
@@ -162,6 +167,12 @@ function PropertyCard({ p }: { p: Property }) {
           </button>
         </div>
       </div>
+
+      <Property3DModal
+        open={show3D}
+        onClose={() => setShow3D(false)}
+        propertyName={p.name}
+      />
     </div>
   );
 }
