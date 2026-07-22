@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Building,
   Eye,
@@ -15,8 +15,31 @@ import {
   X,
   Circle,
 } from "lucide-react";
-import { type Conversation } from "@/lib/api";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { type Conversation, type Property } from "@/lib/api";
 import { useAI } from "@/hooks/useAI";
+
+const ACTIVITY = [
+  { month: "Jan", visites: 42, prospects: 12 },
+  { month: "Fév", visites: 58, prospects: 18 },
+  { month: "Mar", visites: 71, prospects: 22 },
+  { month: "Avr", visites: 89, prospects: 27 },
+  { month: "Mai", visites: 112, prospects: 31 },
+  { month: "Juin", visites: 148, prospects: 37 },
+];
+
+const PIE_COLORS = ["#6366f1", "#818cf8", "#a5b4fc", "#c7d2fe", "#4f46e5", "#4338ca"];
 
 const STATS = [
   { label: "Biens publiés", value: 24, trend: "+3 ce mois", icon: Building },
@@ -27,8 +50,10 @@ const STATS = [
 
 export default function AgencyDashboardClient({
   initialConversations,
+  properties = [],
 }: {
   initialConversations: Conversation[];
+  properties?: Property[];
 }) {
   const [aiOpen, setAiOpen] = useState(false);
 
@@ -60,6 +85,8 @@ export default function AgencyDashboardClient({
         ))}
       </div>
 
+      <ChartsRow properties={properties} />
+
       <div className="grid lg:grid-cols-5 gap-4">
         <ConversationsPanel conversations={initialConversations} />
         <div className="lg:col-span-2 space-y-4">
@@ -77,6 +104,112 @@ export default function AgencyDashboardClient({
       </button>
 
       {aiOpen && <AIDrawer onClose={() => setAiOpen(false)} />}
+    </div>
+  );
+}
+
+function ChartsRow({ properties }: { properties: Property[] }) {
+  const typeData = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of properties) counts.set(p.type, (counts.get(p.type) ?? 0) + 1);
+    return Array.from(counts, ([name, value]) => ({ name, value }));
+  }, [properties]);
+
+  return (
+    <div className="grid lg:grid-cols-3 gap-4">
+      <div className="lg:col-span-2 agency-card rounded-xl p-5">
+        <h3 className="text-sm font-medium mb-4">Activité (6 derniers mois)</h3>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={ACTIVITY} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gVisites" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gProspects" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#34d399" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#34d399" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" fontSize={12} />
+              <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} />
+              <Tooltip
+                contentStyle={{
+                  background: "#1a1a24",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="visites"
+                stroke="#6366f1"
+                fill="url(#gVisites)"
+                strokeWidth={2}
+              />
+              <Area
+                type="monotone"
+                dataKey="prospects"
+                stroke="#34d399"
+                fill="url(#gProspects)"
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="agency-card rounded-xl p-5">
+        <h3 className="text-sm font-medium mb-4">Biens par type</h3>
+        <div className="h-64">
+          {typeData.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-sm text-white/40">
+              Aucune donnée
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={typeData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={80}
+                  paddingAngle={3}
+                >
+                  {typeData.map((entry, i) => (
+                    <Cell key={entry.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: "#1a1a24",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {typeData.map((entry, i) => (
+            <span key={entry.name} className="inline-flex items-center gap-1.5 text-xs text-white/60">
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: PIE_COLORS[i % PIE_COLORS.length] }}
+              />
+              {entry.name} ({entry.value})
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

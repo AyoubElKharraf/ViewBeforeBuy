@@ -1,13 +1,17 @@
-import { getConversations, type Conversation } from "@/lib/api";
+import { getConversations, getProperties, type Conversation, type Property } from "@/lib/api";
 import AgencyDashboardClient from "./AgencyDashboardClient";
 
 export default async function AgencyDashboardPage() {
   let initialConversations: Conversation[] = [];
+  let properties: Property[] = [];
   try {
-    initialConversations = await getConversations();
+    [initialConversations, properties] = await Promise.all([getConversations(), getProperties()]);
   } catch {
     initialConversations = [];
+    properties = [];
   }
 
-  return <AgencyDashboardClient initialConversations={initialConversations} />;
+  return (
+    <AgencyDashboardClient initialConversations={initialConversations} properties={properties} />
+  );
 }

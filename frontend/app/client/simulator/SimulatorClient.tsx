@@ -3,6 +3,18 @@
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, Check } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { calculateCredit, formatDH } from "@/utils/creditCalculator";
 import { type Bank } from "@/lib/api";
 import { useAI } from "@/hooks/useAI";
@@ -39,6 +51,19 @@ export default function SimulatorClient({ banks }: { banks: Bank[] }) {
       annualRate: b.rate,
     }),
   }));
+
+  const bankChartData = bankResults.map(({ bank, result }) => ({
+    name: bank.name,
+    mensualite: Math.round(result.monthlyPayment),
+  }));
+
+  const breakdownData = [
+    { name: "Capital", value: Math.round(main.loanAmount) },
+    { name: "Intérêts", value: Math.round(main.totalInterest) },
+  ];
+
+  const GOLD = "#c9a227";
+  const GOLD_LIGHT = "#e6c65c";
 
   useEffect(() => {
     setAdvice("");
@@ -137,10 +162,72 @@ export default function SimulatorClient({ banks }: { banks: Bank[] }) {
         </div>
       </motion.div>
 
+      <div className="client-card rounded-2xl p-5">
+        <h2 className="text-lg font-semibold mb-4" style={{ fontFamily: "var(--font-serif)" }}>
+          Répartition du crédit
+        </h2>
+        <div className="h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={breakdownData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={45}
+                outerRadius={80}
+                paddingAngle={3}
+              >
+                <Cell fill={GOLD} />
+                <Cell fill={GOLD_LIGHT} />
+              </Pie>
+              <Tooltip
+                formatter={(value) => formatDH(Number(value))}
+                contentStyle={{ borderRadius: 8, fontSize: 12 }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="flex justify-center gap-4 text-xs text-[color:var(--color-client-text-muted)]">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: GOLD }} /> Capital{" "}
+            {formatDH(main.loanAmount)}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: GOLD_LIGHT }} /> Intérêts{" "}
+            {formatDH(main.totalInterest)}
+          </span>
+        </div>
+      </div>
+
       <div>
         <h2 className="text-lg font-semibold mb-3" style={{ fontFamily: "var(--font-serif)" }}>
           Comparateur bancaire
         </h2>
+        {bankChartData.length > 0 && (
+          <div className="client-card rounded-2xl p-5 mb-3">
+            <div className="text-sm mb-3">Mensualité par banque</div>
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={bankChartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
+                  <XAxis dataKey="name" fontSize={11} />
+                  <YAxis fontSize={11} />
+                  <Tooltip
+                    formatter={(value) => formatDH(Number(value))}
+                    contentStyle={{ borderRadius: 8, fontSize: 12 }}
+                  />
+                  <Bar dataKey="mensualite" radius={[6, 6, 0, 0]}>
+                    {bankChartData.map((entry, i) => (
+                      <Cell key={entry.name} fill={i === 0 ? GOLD : GOLD_LIGHT} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
         <div className="space-y-2">
           {bankResults.length === 0 ? (
             <div className="client-card rounded-xl p-4 text-sm text-[color:var(--color-client-text-muted)]">
