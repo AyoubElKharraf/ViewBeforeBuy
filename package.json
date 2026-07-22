@@ -13,6 +13,7 @@
     "build": "npm run build -w @viewbeforebuy/database && npm run build -w @viewbeforebuy/backend && npm run build -w @viewbeforebuy/frontend",
     "start": "concurrently -n web,api -c cyan,magenta \"npm run start -w @viewbeforebuy/frontend\" \"npm run start -w @viewbeforebuy/backend\"",
     "lint": "npm run lint -w @viewbeforebuy/frontend && npm run lint -w @viewbeforebuy/backend",
+    "test": "npm run test -w @viewbeforebuy/backend && npm run test -w @viewbeforebuy/frontend",
     "db:generate": "npm run generate -w @viewbeforebuy/database",
     "db:migrate": "dotenv -e .env -- npm run migrate -w @viewbeforebuy/database",
     "db:seed": "dotenv -e .env -- npm run seed -w @viewbeforebuy/database",

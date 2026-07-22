@@ -176,6 +176,7 @@ npm run dev
 | `npm run build` | Build database → backend → frontend |
 | `npm start` | Démarre les builds de production |
 | `npm run lint` | Lint / typecheck frontend + backend |
+| `npm test` | Lance les tests (backend + frontend) |
 | `npm run db:generate` | Génère le client Prisma |
 | `npm run db:migrate` | Applique les migrations |
 | `npm run db:seed` | Seed (biens, conversations, banques) |
@@ -256,6 +257,26 @@ ViewBeforeBuy/
 ├── docker-compose.yml        # PostgreSQL + Redis
 └── package.json              # workspaces + scripts
 ```
+
+---
+
+## 🧪 Tests
+
+Suite de tests automatisés exécutable via `npm test` (à la racine).
+
+| Cible | Outils | Couverture |
+| --- | --- | --- |
+| **Backend — unitaires** | Vitest | Calcul de crédit & score d'éligibilité (`services/credit`) |
+| **Backend — intégration** | Vitest + Supertest | Endpoints API (`/health`, 404, auth JWT, validation Zod, routes protégées) |
+| **Frontend — unitaires** | Vitest | Calculs crédit/éligibilité (`utils/creditCalculator`) |
+
+```bash
+npm test                              # backend + frontend
+npm test -w @viewbeforebuy/backend    # backend uniquement
+npm test -w @viewbeforebuy/frontend   # frontend uniquement
+```
+
+> Les tests s'exécutent en isolation, sans base de données ni services externes (Redis/Stripe/Supabase désactivés en contexte de test).
 
 ---
 
