@@ -163,49 +163,67 @@ export default function ClientHomeClient({ properties }: { properties: Property[
         {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
       </section>
 
-      <section className="client-card rounded-2xl p-5">
-        <div className="text-xs uppercase tracking-widest text-[color:var(--color-client-gold)] mb-2">
-          Crédit actif
-        </div>
-        <div className="flex items-baseline justify-between">
-          <div>
-            <div className="text-2xl font-semibold">
-              7 850 DH<span className="text-sm font-normal">/mois</span>
-            </div>
-            <div className="text-xs text-[color:var(--color-client-text-muted)] mt-1">
-              CIH Bank · 4.3% · 25 ans
-            </div>
-          </div>
-          <Link href="/client/simulator" className="text-xs text-[color:var(--color-client-gold)]">
-            Détails →
-          </Link>
-        </div>
-        <div className="mt-4 h-2 rounded-full bg-[color:var(--color-client-border)]/60 overflow-hidden">
-          <div
-            className="h-full bg-[color:var(--color-client-gold)] rounded-full"
-            style={{ width: "18%" }}
-          />
-        </div>
-        <div className="text-xs text-[color:var(--color-client-text-muted)] mt-2">
-          54 mois payés sur 300
-        </div>
-      </section>
-
-      <section className="rounded-2xl p-5 bg-gradient-to-br from-[color:var(--color-client-gold)]/15 to-transparent border border-[color:var(--color-client-gold)]/30">
-        <div className="text-xs uppercase tracking-widest text-[color:var(--color-client-gold)] mb-2">
-          Recommandé par l'IA
-        </div>
-        <div className="font-medium">Appartement Maarif — Casablanca</div>
-        <div className="text-sm text-[color:var(--color-client-text-muted)] mt-1">
-          Correspond à votre profil financier · Éligibilité 82/100
-        </div>
+      <section className="grid sm:grid-cols-2 gap-4">
         <Link
           href="/client/simulator"
-          className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[color:var(--color-client-gold)] text-white text-sm hover:brightness-110"
+          className="client-card rounded-2xl p-5 hover:border-[color:var(--color-client-gold)]/40 transition"
         >
-          Simuler le crédit <ArrowRight className="w-4 h-4" />
+          <div className="text-xs uppercase tracking-widest text-[color:var(--color-client-gold)] mb-2">
+            Financement
+          </div>
+          <div className="font-medium">Simulateur de crédit</div>
+          <div className="text-sm text-[color:var(--color-client-text-muted)] mt-1">
+            Mensualités, banques marocaines et optimisation IA
+          </div>
+          <span className="mt-4 inline-flex items-center gap-1 text-xs text-[color:var(--color-client-gold)]">
+            Lancer une simulation <ArrowRight className="w-3 h-3" />
+          </span>
+        </Link>
+
+        <Link
+          href="/client/score"
+          className="client-card rounded-2xl p-5 hover:border-[color:var(--color-client-gold)]/40 transition"
+        >
+          <div className="text-xs uppercase tracking-widest text-[color:var(--color-client-gold)] mb-2">
+            Éligibilité
+          </div>
+          <div className="font-medium">Score BAM (33 %)</div>
+          <div className="text-sm text-[color:var(--color-client-text-muted)] mt-1">
+            Capacité d'emprunt et conseils d'optimisation
+          </div>
+          <span className="mt-4 inline-flex items-center gap-1 text-xs text-[color:var(--color-client-gold)]">
+            Calculer mon score <ArrowRight className="w-3 h-3" />
+          </span>
         </Link>
       </section>
+
+      {properties[0] && (
+        <section className="rounded-2xl p-5 bg-gradient-to-br from-[color:var(--color-client-gold)]/15 to-transparent border border-[color:var(--color-client-gold)]/30">
+          <div className="text-xs uppercase tracking-widest text-[color:var(--color-client-gold)] mb-2">
+            Bien en vedette
+          </div>
+          <div className="font-medium">
+            {properties[0].name} — {properties[0].city}
+          </div>
+          <div className="text-sm text-[color:var(--color-client-text-muted)] mt-1">
+            {formatPrice(properties[0].price)} · Score localisation {properties[0].locationScore}/10
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              href="/client/browse"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[color:var(--color-client-gold)] text-white text-sm hover:brightness-110"
+            >
+              Voir le catalogue <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/client/ai-assistant"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[color:var(--color-client-gold)]/40 text-[color:var(--color-client-gold)] text-sm hover:bg-[color:var(--color-client-gold)]/10"
+            >
+              Demander à l'IA
+            </Link>
+          </div>
+        </section>
+      )}
 
       <Property3DModal
         open={view3d !== null}

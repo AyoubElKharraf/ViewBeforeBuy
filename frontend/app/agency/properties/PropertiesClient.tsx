@@ -26,7 +26,7 @@ export default function PropertiesClient({ properties }: { properties: Property[
           <h1 className="text-3xl font-semibold">Mes Biens</h1>
           <p className="text-sm text-white/50 mt-1">{filtered.length} biens actifs</p>
         </div>
-        <button className="px-4 py-2 rounded-lg bg-[color:var(--color-agency-accent)] text-white text-sm font-medium inline-flex items-center gap-2 hover:brightness-110">
+        <button className="px-4 py-2 rounded-lg bg-[color:var(--color-agency-accent)]/40 text-white/70 text-sm font-medium inline-flex items-center gap-2 cursor-not-allowed" title="Disponible bientôt — utilisez l'upload photo sur chaque carte">
           <Plus className="w-4 h-4" /> Ajouter un bien
         </button>
       </div>

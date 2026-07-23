@@ -58,6 +58,17 @@ function LoginForm() {
         <h1 className="text-2xl font-semibold mt-6">Connexion</h1>
         <p className="text-sm text-white/60 mt-1">Accédez à votre espace.</p>
 
+        <div className="mt-4 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-[11px] text-white/55 space-y-1">
+          <div className="uppercase tracking-widest text-white/40 text-[10px]">Comptes démo</div>
+          <div>
+            Client · <button type="button" className="text-[color:var(--color-agency-accent-light)] hover:underline" onClick={() => { setEmail("client@viewbeforebuy.ma"); setPassword("demo1234"); }}>client@viewbeforebuy.ma</button>
+          </div>
+          <div>
+            Agence · <button type="button" className="text-[color:var(--color-agency-accent-light)] hover:underline" onClick={() => { setEmail("agency@viewbeforebuy.ma"); setPassword("demo1234"); }}>agency@viewbeforebuy.ma</button>
+          </div>
+          <div className="text-white/40">Mot de passe : <code className="text-white/70">demo1234</code></div>
+        </div>
+
         {error && (
           <div className="mt-5 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
             {error}

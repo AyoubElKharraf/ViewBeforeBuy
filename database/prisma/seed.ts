@@ -1,6 +1,28 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+/** Mot de passe partagé des comptes démo (documenté dans le README). */
+const DEMO_PASSWORD = "demo1234";
+
+const DEMO_USERS = [
+  {
+    email: "client@viewbeforebuy.ma",
+    name: "Amine Alaoui",
+    role: "CLIENT" as const,
+  },
+  {
+    email: "agency@viewbeforebuy.ma",
+    name: "Youssef Benali",
+    role: "AGENCY" as const,
+  },
+  {
+    email: "admin@viewbeforebuy.ma",
+    name: "Admin DiNext",
+    role: "ADMIN" as const,
+  },
+];
 
 const PROPERTIES = [
   {
@@ -193,6 +215,27 @@ async function main() {
   await prisma.property.deleteMany();
   await prisma.bank.deleteMany();
 
+  const password = await bcrypt.hash(DEMO_PASSWORD, 10);
+
+  for (const demo of DEMO_USERS) {
+    await prisma.user.upsert({
+      where: { email: demo.email },
+      create: {
+        email: demo.email,
+        name: demo.name,
+        password,
+        role: demo.role,
+        provider: "local",
+      },
+      update: {
+        name: demo.name,
+        password,
+        role: demo.role,
+        provider: "local",
+      },
+    });
+  }
+
   for (const property of PROPERTIES) {
     await prisma.property.create({ data: property });
   }
@@ -212,8 +255,12 @@ async function main() {
   }
 
   console.log(
-    `Seeded ${PROPERTIES.length} properties, ${CONVERSATIONS.length} conversations, ${BANKS.length} banks.`,
+    `Seeded ${DEMO_USERS.length} users, ${PROPERTIES.length} properties, ${CONVERSATIONS.length} conversations, ${BANKS.length} banks.`,
   );
+  console.log("Demo accounts (password: demo1234):");
+  for (const u of DEMO_USERS) {
+    console.log(`  - ${u.role.padEnd(6)} ${u.email}`);
+  }
 }
 
 main()

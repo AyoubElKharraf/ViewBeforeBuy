@@ -97,14 +97,17 @@ function AgencyLayoutInner({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="p-3 border-t border-white/5 space-y-2">
-          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-[color:var(--color-agency-accent)] text-white text-sm font-medium hover:brightness-110 transition">
-            <Upload className="w-4 h-4" /> Upload
-          </button>
           <Link
             href="/agency/properties"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-[color:var(--color-agency-accent)] text-white text-sm font-medium hover:brightness-110 transition"
+          >
+            <Upload className="w-4 h-4" /> Mes Biens
+          </Link>
+          <Link
+            href="/agency/library"
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 text-white/80 text-sm hover:bg-white/5 transition"
           >
-            <Building className="w-4 h-4" /> Mes Biens
+            <Building className="w-4 h-4" /> Bibliothèque 3D
           </Link>
           <button
             onClick={handleLogout}
@@ -117,14 +120,17 @@ function AgencyLayoutInner({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 ml-60 flex flex-col min-w-0">
         <header className="h-14 border-b border-white/5 bg-[color:var(--color-agency-bg)]/80 backdrop-blur-md flex items-center px-6 gap-2 sticky top-0 z-30">
-          <button className="px-3 py-1.5 text-xs rounded-md bg-[color:var(--color-agency-accent)] text-white font-medium">
-            Upload
-          </button>
           <Link
             href="/agency/properties"
-            className="px-3 py-1.5 text-xs rounded-md text-white/70 hover:bg-white/5"
+            className="px-3 py-1.5 text-xs rounded-md bg-[color:var(--color-agency-accent)] text-white font-medium hover:brightness-110"
           >
             Mes Biens
+          </Link>
+          <Link
+            href="/agency/conversations"
+            className="px-3 py-1.5 text-xs rounded-md text-white/70 hover:bg-white/5"
+          >
+            Conversations
           </Link>
           <div className="w-px h-4 bg-white/10 mx-2" />
           <Link
@@ -138,6 +144,12 @@ function AgencyLayoutInner({ children }: { children: React.ReactNode }) {
             className="px-3 py-1.5 text-xs rounded-md text-white/70 hover:bg-white/5"
           >
             Stats
+          </Link>
+          <Link
+            href="/agency/settings"
+            className="px-3 py-1.5 text-xs rounded-md text-white/70 hover:bg-white/5"
+          >
+            Paramètres
           </Link>
           <div className="flex-1" />
           <div className="flex items-center gap-2 text-xs text-white/70">
