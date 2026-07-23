@@ -4,6 +4,7 @@
 
 **Plateforme immobilière marocaine — Visualisation 3D, Assistant IA & Outils Fintech**
 
+[![CI](https://github.com/AyoubElKharraf/ViewBeforeBuy/actions/workflows/ci.yml/badge.svg)](https://github.com/AyoubElKharraf/ViewBeforeBuy/actions/workflows/ci.yml)
 [![Stack](https://img.shields.io/badge/stack-PERN-2ea44f)](#-architecture)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![Express](https://img.shields.io/badge/Express-5-000000)](https://expressjs.com/)
