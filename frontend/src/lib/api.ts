@@ -114,7 +114,12 @@ export type AuthResponse = {
   token: string;
 };
 
-export async function register(input: { email: string; password: string; name?: string }) {
+export async function register(input: {
+  email: string;
+  password: string;
+  name?: string;
+  role?: "CLIENT" | "AGENCY";
+}) {
   const res = await request<AuthResponse>("/api/auth/register", {
     method: "POST",
     body: JSON.stringify(input),

@@ -21,16 +21,16 @@ export default function LandingPage() {
           <div className="text-xl font-semibold gradient-text tracking-tight">ViewBeforeBuy</div>
           <div className="flex items-center gap-3">
             <Link
-              href="/client"
+              href="/login"
               className="px-4 py-2 text-sm text-white/80 hover:text-white transition"
             >
-              Espace Client
+              Se connecter
             </Link>
             <Link
-              href="/agency"
+              href="/register"
               className="px-4 py-2 text-sm rounded-md bg-[color:var(--color-agency-accent)] text-white hover:brightness-110 transition"
             >
-              Espace Agence
+              Créer un compte
             </Link>
           </div>
         </div>

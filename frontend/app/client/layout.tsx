@@ -1,9 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, Building, FileText, CreditCard, User, Bell } from "lucide-react";
+import { Home, Building, FileText, CreditCard, User, Bell, LogOut } from "lucide-react";
+import { RequireAuth } from "@/components/RequireAuth";
+import { useAuth } from "@/lib/auth";
+
+function initials(name: string | null, email: string): string {
+  if (name && name.trim()) {
+    return name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("");
+  }
+  return email.slice(0, 2).toUpperCase();
+}
 
 type NavItem = { href: string; label: string; icon: typeof Home; exact?: boolean };
 
@@ -15,8 +29,15 @@ const NAV: NavItem[] = [
   { href: "/client/profile", label: "Profil", icon: User },
 ];
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+function ClientLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
+  function handleLogout() {
+    logout();
+    router.replace("/login");
+  }
 
   return (
     <div className="min-h-screen client-surface pb-24">
@@ -33,9 +54,19 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <button className="w-9 h-9 rounded-full client-card flex items-center justify-center">
               <Bell className="w-4 h-4 text-[color:var(--color-client-text)]" />
             </button>
-            <div className="w-9 h-9 rounded-full bg-[color:var(--color-client-gold)] text-white flex items-center justify-center text-xs font-semibold">
-              AM
+            <div
+              className="w-9 h-9 rounded-full bg-[color:var(--color-client-gold)] text-white flex items-center justify-center text-xs font-semibold"
+              title={user?.email ?? ""}
+            >
+              {user ? initials(user.name, user.email) : "?"}
             </div>
+            <button
+              onClick={handleLogout}
+              title="Déconnexion"
+              className="w-9 h-9 rounded-full client-card flex items-center justify-center text-[color:var(--color-client-text-muted)] hover:text-red-500 transition"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
@@ -72,5 +103,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         </div>
       </nav>
     </div>
+  );
+}
+
+export default function ClientLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <RequireAuth>
+      <ClientLayoutInner>{children}</ClientLayoutInner>
+    </RequireAuth>
   );
 }

@@ -48,7 +48,12 @@ export function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 }
 
-export async function registerUser(input: { email: string; password: string; name?: string }) {
+export async function registerUser(input: {
+  email: string;
+  password: string;
+  name?: string;
+  role?: "CLIENT" | "AGENCY";
+}) {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) throw new HttpError(409, "Cet email est déjà utilisé");
 
@@ -59,6 +64,7 @@ export async function registerUser(input: { email: string; password: string; nam
       password,
       name: input.name ?? null,
       provider: "local",
+      role: input.role ?? "CLIENT",
     },
   });
 

@@ -15,6 +15,8 @@ enum MessageRole {
 enum Role {
   USER
   ADMIN
+  CLIENT
+  AGENCY
 }
 
 model User {
@@ -25,7 +27,7 @@ model User {
   avatar     String?
   provider   String   @default("local")
   providerId String?
-  role       Role     @default(USER)
+  role       Role     @default(CLIENT)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

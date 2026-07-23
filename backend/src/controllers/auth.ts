@@ -8,6 +8,7 @@ const RegisterSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
   name: z.string().min(1).max(120).optional(),
+  role: z.enum(["CLIENT", "AGENCY"]).optional(),
 });
 
 const LoginSchema = z.object({

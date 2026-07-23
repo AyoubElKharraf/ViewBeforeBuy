@@ -288,6 +288,7 @@ npm test -w @viewbeforebuy/frontend   # frontend uniquement
 - **Rate-limiting** distribué (Redis) : global + strict sur l'IA
 - **Validation** systématique des entrées avec **Zod**
 - **Mots de passe** hachés avec **bcrypt** ; **JWT** pour les sessions stateless
+- **Rôles** (`CLIENT` / `AGENCY` / `ADMIN`) : l'espace agence est réservé au rôle `AGENCY` (garde côté frontend `RequireAuth`), les pages sont protégées et redirigent vers `/login`
 - **Secrets** hors du dépôt (`.env` gitignoré)
 
 ---

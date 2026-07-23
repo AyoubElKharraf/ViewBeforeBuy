@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard,
@@ -14,6 +14,20 @@ import {
   LogOut,
   Circle,
 } from "lucide-react";
+import { RequireAuth } from "@/components/RequireAuth";
+import { useAuth } from "@/lib/auth";
+
+function initials(name: string | null, email: string): string {
+  if (name && name.trim()) {
+    return name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("");
+  }
+  return email.slice(0, 2).toUpperCase();
+}
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 
@@ -26,8 +40,15 @@ const NAV: NavItem[] = [
   { href: "/agency/settings", label: "Paramètres", icon: Settings },
 ];
 
-export default function AgencyLayout({ children }: { children: React.ReactNode }) {
+function AgencyLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
+  function handleLogout() {
+    logout();
+    router.replace("/login");
+  }
 
   return (
     <div className="min-h-screen agency-surface flex">
@@ -40,11 +61,11 @@ export default function AgencyLayout({ children }: { children: React.ReactNode }
         <div className="p-4 border-b border-white/5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[color:var(--color-agency-accent)]/30 text-[color:var(--color-agency-accent-light)] flex items-center justify-center font-semibold">
-              YB
+              {user ? initials(user.name, user.email) : "?"}
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-medium truncate">Youssef Benali</div>
-              <div className="text-xs text-white/50 truncate">y.benali@immo.ma</div>
+              <div className="text-sm font-medium truncate">{user?.name || "Utilisateur"}</div>
+              <div className="text-xs text-white/50 truncate">{user?.email}</div>
             </div>
           </div>
           <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[color:var(--color-agency-accent-light)] border border-[color:var(--color-agency-accent)]/40 rounded-full px-2 py-0.5">
@@ -85,7 +106,10 @@ export default function AgencyLayout({ children }: { children: React.ReactNode }
           >
             <Building className="w-4 h-4" /> Mes Biens
           </Link>
-          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 text-sm hover:bg-red-500/10 transition">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 text-sm hover:bg-red-500/10 transition"
+          >
             <LogOut className="w-4 h-4" /> Déconnexion
           </button>
         </div>
@@ -115,7 +139,10 @@ export default function AgencyLayout({ children }: { children: React.ReactNode }
             Assistant en ligne
           </div>
           <div className="w-px h-4 bg-white/10 mx-2" />
-          <button className="px-3 py-1.5 text-xs rounded-md text-red-400 hover:bg-red-500/10 inline-flex items-center gap-1.5">
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 text-xs rounded-md text-red-400 hover:bg-red-500/10 inline-flex items-center gap-1.5"
+          >
             <LogOut className="w-3.5 h-3.5" /> Déconnexion
           </button>
         </header>
@@ -130,5 +157,13 @@ export default function AgencyLayout({ children }: { children: React.ReactNode }
         </motion.main>
       </div>
     </div>
+  );
+}
+
+export default function AgencyLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <RequireAuth role="AGENCY">
+      <AgencyLayoutInner>{children}</AgencyLayoutInner>
+    </RequireAuth>
   );
 }
