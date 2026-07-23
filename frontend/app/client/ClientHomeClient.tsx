@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Star, MapPin, Search, ArrowRight, Loader2, Move3d, Sparkles } from "lucide-react";
 import { ApiError, createCheckout, getToken, type Property } from "@/lib/api";
@@ -10,6 +11,8 @@ import { useAuth } from "@/lib/auth";
 
 export default function ClientHomeClient({ properties }: { properties: Property[] }) {
   const { user } = useAuth();
+  const router = useRouter();
+  const [search, setSearch] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [view3d, setView3d] = useState<Property | null>(null);
@@ -64,13 +67,22 @@ export default function ClientHomeClient({ properties }: { properties: Property[
         <ArrowRight className="w-4 h-4 text-[color:var(--color-client-gold)] shrink-0" />
       </Link>
 
-      <div className="client-card rounded-2xl p-4 flex items-center gap-3">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const q = search.trim();
+          router.push(q ? `/client/browse?q=${encodeURIComponent(q)}` : "/client/browse");
+        }}
+        className="client-card rounded-2xl p-4 flex items-center gap-3"
+      >
         <Search className="w-5 h-5 text-[color:var(--color-client-text-muted)]" />
         <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher un bien..."
           className="flex-1 bg-transparent focus:outline-none text-sm text-[color:var(--color-client-text)] placeholder:text-[color:var(--color-client-text-muted)]"
         />
-      </div>
+      </form>
 
       <section>
         <div className="flex items-center justify-between mb-3">

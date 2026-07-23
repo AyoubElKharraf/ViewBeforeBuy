@@ -127,12 +127,18 @@ function AgencyLayoutInner({ children }: { children: React.ReactNode }) {
             Mes Biens
           </Link>
           <div className="w-px h-4 bg-white/10 mx-2" />
-          <button className="px-3 py-1.5 text-xs rounded-md text-white/70 hover:bg-white/5">
+          <Link
+            href="/agency/library"
+            className="px-3 py-1.5 text-xs rounded-md text-white/70 hover:bg-white/5"
+          >
             Vue 3D
-          </button>
-          <button className="px-3 py-1.5 text-xs rounded-md text-white/70 hover:bg-white/5">
+          </Link>
+          <Link
+            href="/agency/stats"
+            className="px-3 py-1.5 text-xs rounded-md text-white/70 hover:bg-white/5"
+          >
             Stats
-          </button>
+          </Link>
           <div className="flex-1" />
           <div className="flex items-center gap-2 text-xs text-white/70">
             <Circle className="w-2 h-2 fill-emerald-400 text-emerald-400" />
