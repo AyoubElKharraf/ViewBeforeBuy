@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, Building, FileText, CreditCard, User, Bell, LogOut } from "lucide-react";
+import { Home, Building, FileText, CreditCard, Sparkles, Bell, LogOut } from "lucide-react";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth";
 
@@ -25,8 +25,8 @@ const NAV: NavItem[] = [
   { href: "/client", label: "Accueil", icon: Home, exact: true },
   { href: "/client/simulator", label: "Crédits", icon: CreditCard },
   { href: "/client/score", label: "Éligibilité", icon: FileText },
+  { href: "/client/ai-assistant", label: "IA", icon: Sparkles },
   { href: "/client/browse", label: "Biens", icon: Building },
-  { href: "/client/profile", label: "Profil", icon: User },
 ];
 
 function ClientLayoutInner({ children }: { children: React.ReactNode }) {

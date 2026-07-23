@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Star, MapPin, Search, ArrowRight, Loader2, Move3d } from "lucide-react";
+import { Star, MapPin, Search, ArrowRight, Loader2, Move3d, Sparkles } from "lucide-react";
 import { ApiError, createCheckout, getToken, type Property } from "@/lib/api";
 import { formatPrice } from "@/utils/types";
 import Property3DModal from "@/components/Property3DModal";
+import { useAuth } from "@/lib/auth";
 
 export default function ClientHomeClient({ properties }: { properties: Property[] }) {
+  const { user } = useAuth();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [view3d, setView3d] = useState<Property | null>(null);
@@ -38,11 +40,29 @@ export default function ClientHomeClient({ properties }: { properties: Property[
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-sm text-[color:var(--color-client-text-muted)]">Bonjour, Amine 👋</p>
+        <p className="text-sm text-[color:var(--color-client-text-muted)]">
+          Bonjour{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋
+        </p>
         <h1 className="text-3xl font-semibold mt-1" style={{ fontFamily: "var(--font-serif)" }}>
           Trouvez votre <em className="text-[color:var(--color-client-gold)]">chez-vous</em>
         </h1>
       </div>
+
+      <Link
+        href="/client/ai-assistant"
+        className="client-card rounded-2xl p-4 flex items-center gap-3 hover:border-[color:var(--color-client-gold)]/40 transition"
+      >
+        <div className="w-11 h-11 rounded-xl bg-[color:var(--color-client-gold)]/15 text-[color:var(--color-client-gold)] flex items-center justify-center shrink-0">
+          <Sparkles className="w-5 h-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-medium text-sm">Copilote Immobilier IA</div>
+          <div className="text-xs text-[color:var(--color-client-text-muted)] truncate">
+            Posez vos questions sur les biens et le financement
+          </div>
+        </div>
+        <ArrowRight className="w-4 h-4 text-[color:var(--color-client-gold)] shrink-0" />
+      </Link>
 
       <div className="client-card rounded-2xl p-4 flex items-center gap-3">
         <Search className="w-5 h-5 text-[color:var(--color-client-text-muted)]" />

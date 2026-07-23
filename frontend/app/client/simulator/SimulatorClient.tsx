@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Check } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -16,15 +16,18 @@ import {
   YAxis,
 } from "recharts";
 import { calculateCredit, formatDH } from "@/utils/creditCalculator";
-import { type Bank } from "@/lib/api";
-import { useAI } from "@/hooks/useAI";
+import { aiScoreEligibility, ApiError, type AiScoreResponse, type Bank } from "@/lib/api";
+import { AiScoreModal } from "@/components/AiScoreModal";
 
 export default function SimulatorClient({ banks }: { banks: Bank[] }) {
   const [price, setPrice] = useState(1200000);
   const [down, setDown] = useState(240000);
   const [duration, setDuration] = useState(25);
-  const [advice, setAdvice] = useState<string>("");
-  const { send, loading } = useAI("client");
+  const [income, setIncome] = useState(15000);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiData, setAiData] = useState<AiScoreResponse | null>(null);
 
   const best = banks[0] ?? {
     name: "CIH Bank",
@@ -65,17 +68,32 @@ export default function SimulatorClient({ banks }: { banks: Bank[] }) {
   const GOLD = "#c9a227";
   const GOLD_LIGHT = "#e6c65c";
 
-  useEffect(() => {
-    setAdvice("");
-  }, [price, down, duration]);
-
-  const askAI = async () => {
-    const ctx = `Prix: ${price} DH, Apport: ${down} DH, Durée: ${duration} ans, Mensualité (CIH 4.3%): ${Math.round(main.monthlyPayment)} DH.`;
-    const reply = await send(
-      "Analyse cette simulation et donne-moi un conseil personnalisé bref (3 phrases).",
-      ctx,
-    );
-    setAdvice(reply);
+  const optimizeWithAi = async () => {
+    setModalOpen(true);
+    setAiLoading(true);
+    setAiError(null);
+    setAiData(null);
+    try {
+      const data = await aiScoreEligibility({
+        monthlyIncome: income,
+        existingDebts: 0,
+        downPayment: down,
+        duration,
+        loanAmount: main.loanAmount,
+        propertyPrice: price,
+        query:
+          "Analyse cette simulation de crédit et explique comment optimiser mon score d'éligibilité.",
+      });
+      setAiData(data);
+    } catch (err) {
+      setAiError(
+        err instanceof ApiError
+          ? err.message
+          : "Impossible d'obtenir les recommandations IA.",
+      );
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -272,30 +290,41 @@ export default function SimulatorClient({ banks }: { banks: Bank[] }) {
         </div>
       </div>
 
-      <div className="client-card rounded-2xl p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[color:var(--color-client-gold)]" />
-            <span className="font-medium">Conseil IA</span>
-          </div>
-          <button
-            onClick={askAI}
-            disabled={loading}
-            className="text-xs px-3 py-1.5 rounded-md bg-[color:var(--color-client-gold)] text-white disabled:opacity-50"
-          >
-            {loading ? "Analyse..." : "Analyser"}
-          </button>
+      <div className="client-card rounded-2xl p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-[color:var(--color-client-gold)]" />
+          <span className="font-medium">Optimisation IA</span>
         </div>
-        <p className="text-sm text-[color:var(--color-client-text-muted)] whitespace-pre-line">
-          {advice ||
-            'Cliquez sur "Analyser" pour obtenir un conseil personnalisé sur cette simulation.'}
+        <p className="text-sm text-[color:var(--color-client-text-muted)]">
+          Envoyez votre simulation au copilote pour obtenir un score d'éligibilité et des
+          recommandations personnalisées.
         </p>
-        {advice && (
-          <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-600">
-            <Check className="w-3 h-3" /> Analyse disponible
-          </div>
-        )}
+        <div>
+          <div className="text-sm mb-1.5">Revenu mensuel net (DH)</div>
+          <input
+            type="number"
+            value={income}
+            onChange={(e) => setIncome(Number(e.target.value) || 0)}
+            className="w-full bg-white/60 border border-[color:var(--color-client-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[color:var(--color-client-gold)]"
+          />
+        </div>
+        <button
+          onClick={optimizeWithAi}
+          disabled={aiLoading || income <= 0}
+          className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[color:var(--color-client-gold)] text-white text-sm font-medium hover:brightness-110 transition disabled:opacity-50"
+        >
+          <Sparkles className="w-4 h-4" />
+          Optimiser mon score avec l'IA
+        </button>
       </div>
+
+      <AiScoreModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        loading={aiLoading}
+        error={aiError}
+        data={aiData}
+      />
     </div>
   );
 }

@@ -33,6 +33,7 @@ export function createApp() {
   // Rate limiting
   app.use("/api/", apiLimiter);
   app.use("/api/chat", aiLimiter);
+  app.use("/api/ai", aiLimiter);
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", service: "viewbeforebuy-api" });

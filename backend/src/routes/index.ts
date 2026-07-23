@@ -11,11 +11,13 @@ import { getPropertiesHandler, getPropertyHandler } from "../controllers/propert
 import { uploadPropertyImageHandler } from "../controllers/storage.js";
 import { protect } from "../shared/middlewares/auth.js";
 import { upload } from "../shared/middlewares/upload.js";
+import { aiRouter } from "./ai.js";
 import { authRouter } from "./auth.js";
 
 export const apiRouter = Router();
 
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/ai", aiRouter);
 
 apiRouter.get("/properties", getPropertiesHandler);
 apiRouter.get("/properties/:id", getPropertyHandler);

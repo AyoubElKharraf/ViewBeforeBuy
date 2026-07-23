@@ -31,8 +31,12 @@ const EnvSchema = z.object({
     .url()
     .default("http://localhost:4000/api/auth/google/callback"),
 
-  // Optionnel pour l'instant (rempli aux étapes suivantes)
+  // Passerelle IA Lovable (fallback si OPENAI_API_KEY absent)
   LOVABLE_API_KEY: z.string().optional(),
+
+  // Assistant IA (RAG / copilote) - laisser vide pour désactiver l'IA (dégradation gracieuse)
+  OPENAI_API_KEY: z.string().optional(),
+  AI_MODEL: z.string().default("gpt-4o-mini"),
 });
 
 const parsed = EnvSchema.safeParse(process.env);

@@ -1,5 +1,6 @@
 {
   "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/tests/**"],
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",

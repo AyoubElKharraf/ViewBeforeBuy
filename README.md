@@ -214,6 +214,8 @@ npm run dev
 | GET | `/api/conversations/:id` | — | Détail d'une conversation |
 | POST | `/api/conversations/:id/messages` | — | Envoi d'un message (diffusé en temps réel) |
 | POST | `/api/chat` | — | Assistant IA — *rate-limité* |
+| POST | `/api/ai/chat` | 🔒 | Copilote immobilier (RAG biens/banques + historique) — *caché 1h, rate-limité* |
+| POST | `/api/ai/score-eligibility` | 🔒 | Score d'éligibilité + recommandations IA d'optimisation — *caché 1h* |
 
 **Fintech & santé**
 
@@ -269,6 +271,7 @@ Suite de tests automatisés exécutable via `npm test` (à la racine).
 | --- | --- | --- |
 | **Backend — unitaires** | Vitest | Calcul de crédit & score d'éligibilité (`services/credit`) |
 | **Backend — intégration** | Vitest + Supertest | Endpoints API (`/health`, 404, auth JWT, validation Zod, routes protégées) |
+| **Backend — IA** | Vitest + Supertest | Endpoints `/api/ai/*` (SDK IA & Prisma mockés → zéro quota/zéro DB, 200/400/401) |
 | **Frontend — unitaires** | Vitest | Calculs crédit/éligibilité (`utils/creditCalculator`) |
 
 ```bash

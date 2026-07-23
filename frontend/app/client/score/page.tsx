@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { calculateEligibility, formatDH } from "@/utils/creditCalculator";
-import { useAI } from "@/hooks/useAI";
 import { Sparkles } from "lucide-react";
+import { calculateEligibility, formatDH } from "@/utils/creditCalculator";
+import { aiScoreEligibility, ApiError, type AiScoreResponse } from "@/lib/api";
+import { AiScoreModal } from "@/components/AiScoreModal";
 
 export default function ScorePage() {
   const [income, setIncome] = useState(15000);
@@ -12,8 +13,11 @@ export default function ScorePage() {
   const [down, setDown] = useState(300000);
   const [duration, setDuration] = useState(25);
   const [result, setResult] = useState<ReturnType<typeof calculateEligibility> | null>(null);
-  const [advice, setAdvice] = useState("");
-  const { send, loading } = useAI("client");
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiData, setAiData] = useState<AiScoreResponse | null>(null);
 
   const compute = () => {
     const r = calculateEligibility({
@@ -23,17 +27,34 @@ export default function ScorePage() {
       duration,
     });
     setResult(r);
-    setAdvice("");
   };
 
-  const askAI = async () => {
-    if (!result) return;
-    const ctx = `Revenu ${income} DH/mois, Crédits ${debts} DH/mois, Apport ${down} DH, Durée ${duration} ans. Score: ${result.score}/100, Statut: ${result.status}, Capacité max: ${Math.round(result.maxLoan)} DH.`;
-    const reply = await send(
-      "Donne 3 recommandations actionnables courtes pour améliorer mon éligibilité.",
-      ctx,
-    );
-    setAdvice(reply);
+  const optimizeWithAi = async () => {
+    setModalOpen(true);
+    setAiLoading(true);
+    setAiError(null);
+    setAiData(null);
+    try {
+      const data = await aiScoreEligibility({
+        monthlyIncome: income,
+        existingDebts: debts,
+        downPayment: down,
+        duration,
+        loanAmount: result?.maxLoan,
+        query: "Comment optimiser mon score d'éligibilité au crédit immobilier ?",
+      });
+      setAiData(data);
+      // Sync local gauge with server score when available
+      setResult(data.eligibility);
+    } catch (err) {
+      setAiError(
+        err instanceof ApiError
+          ? err.message
+          : "Impossible d'obtenir les recommandations IA.",
+      );
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const color =
@@ -107,20 +128,23 @@ export default function ScorePage() {
           </div>
 
           <button
-            onClick={askAI}
-            disabled={loading}
-            className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[color:var(--color-client-gold)]/15 text-[color:var(--color-client-gold)] text-sm disabled:opacity-50"
+            onClick={optimizeWithAi}
+            disabled={aiLoading}
+            className="mt-6 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[color:var(--color-client-gold)] text-white text-sm font-medium hover:brightness-110 transition disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4" />
-            {loading ? "Analyse..." : "Conseils IA"}
+            Optimiser mon score avec l'IA
           </button>
-          {advice && (
-            <div className="mt-4 text-sm text-left text-[color:var(--color-client-text-muted)] whitespace-pre-line">
-              {advice}
-            </div>
-          )}
         </motion.div>
       )}
+
+      <AiScoreModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        loading={aiLoading}
+        error={aiError}
+        data={aiData}
+      />
     </div>
   );
 }

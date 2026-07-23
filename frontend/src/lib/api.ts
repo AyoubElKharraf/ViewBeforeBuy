@@ -225,3 +225,59 @@ export function postChat(input: { message: string; role?: ChatRole; context?: st
     body: JSON.stringify(input),
   });
 }
+
+// ─── Assistant IA (endpoints protégés /api/ai/*) ────────────────────────────
+
+export type AiSource = "ai" | "fallback";
+
+export type AiChatMessage = { role: "user" | "assistant"; content: string };
+
+export type AiPropertyMatch = { id: string; name: string; price: number; city: string };
+
+export type AiChatResponse = {
+  text: string;
+  source: AiSource;
+  matches: AiPropertyMatch[];
+};
+
+/** Copilote immobilier (RAG). Le token JWT est ajouté automatiquement par `request`. */
+export function aiChat(input: {
+  message: string;
+  budget?: number;
+  history?: AiChatMessage[];
+}) {
+  return request<AiChatResponse>("/api/ai/chat", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export type EligibilityScore = {
+  score: number;
+  status: "eligible" | "borderline" | "insufficient";
+  maxLoan: number;
+  debtRatio: number;
+  maxMonthly: number;
+};
+
+export type AiScoreResponse = {
+  eligibility: EligibilityScore;
+  recommendations: string;
+  source: AiSource;
+};
+
+/** Score d'éligibilité + recommandations d'optimisation IA. */
+export function aiScoreEligibility(input: {
+  monthlyIncome: number;
+  existingDebts?: number;
+  downPayment?: number;
+  duration: number;
+  loanAmount?: number;
+  propertyPrice?: number;
+  query?: string;
+}) {
+  return request<AiScoreResponse>("/api/ai/score-eligibility", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
