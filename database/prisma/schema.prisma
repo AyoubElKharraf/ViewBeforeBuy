@@ -19,17 +19,29 @@ enum Role {
   AGENCY
 }
 
+enum NotificationType {
+  NEW_MESSAGE
+  PROPERTY_LIKED
+  REPORT_READY
+  CREDIT_ALERT
+  REVIEW_RECEIVED
+  SYSTEM
+}
+
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  password   String?
-  name       String?
-  avatar     String?
-  provider   String   @default("local")
-  providerId String?
-  role       Role     @default(CLIENT)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String         @id @default(cuid())
+  email         String         @unique
+  password      String?
+  name          String?
+  avatar        String?
+  provider      String         @default("local")
+  providerId    String?
+  role          Role           @default(CLIENT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  notifications Notification[]
+  favorites     Favorite[]
+  reviews       Review[]
 
   @@unique([provider, providerId])
 }
@@ -49,7 +61,16 @@ model Property {
   status        String
   description   String
   imageUrl      String?
+  hasPool       Boolean        @default(false)
+  hasGarden     Boolean        @default(false)
+  hasParking    Boolean        @default(false)
+  lat           Float?
+  lng           Float?
+  avgRating     Float?
+  reviewCount   Int            @default(0)
   conversations Conversation[]
+  favorites     Favorite[]
+  reviews       Review[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -89,4 +110,45 @@ model Bank {
   features       String[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, propertyId])
+  @@index([userId])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, propertyId])
+  @@index([propertyId])
 }

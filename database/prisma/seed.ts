@@ -39,6 +39,11 @@ const PROPERTIES = [
     locationScore: 8.4,
     status: "Disponible",
     description: "Belle villa moderne au cœur d'Agdal, avec jardin et parking.",
+    hasPool: false,
+    hasGarden: true,
+    hasParking: true,
+    lat: 34.0005,
+    lng: -6.8475,
   },
   {
     id: "2",
@@ -54,6 +59,11 @@ const PROPERTIES = [
     locationScore: 9.1,
     status: "Disponible",
     description: "Appartement lumineux au 4ème étage, proche de toutes commodités.",
+    hasPool: false,
+    hasGarden: false,
+    hasParking: true,
+    lat: 33.5835,
+    lng: -7.6325,
   },
   {
     id: "3",
@@ -69,6 +79,11 @@ const PROPERTIES = [
     locationScore: 7.8,
     status: "En négociation",
     description: "Riad authentique rénové dans la médina, patio et piscine.",
+    hasPool: true,
+    hasGarden: true,
+    hasParking: false,
+    lat: 31.6295,
+    lng: -7.9811,
   },
   {
     id: "4",
@@ -84,6 +99,11 @@ const PROPERTIES = [
     locationScore: 9.4,
     status: "Disponible",
     description: "Duplex haut standing avec terrasse panoramique.",
+    hasPool: false,
+    hasGarden: false,
+    hasParking: true,
+    lat: 33.5882,
+    lng: -7.6615,
   },
   {
     id: "5",
@@ -99,6 +119,11 @@ const PROPERTIES = [
     locationScore: 8.9,
     status: "Disponible",
     description: "Villa contemporaine avec piscine et grand jardin.",
+    hasPool: true,
+    hasGarden: true,
+    hasParking: true,
+    lat: 33.548,
+    lng: -7.628,
   },
   {
     id: "6",
@@ -114,6 +139,11 @@ const PROPERTIES = [
     locationScore: 8.7,
     status: "Disponible",
     description: "Appartement rénové au cœur du quartier Hassan.",
+    hasPool: false,
+    hasGarden: false,
+    hasParking: true,
+    lat: 34.0209,
+    lng: -6.835,
   },
 ];
 
@@ -212,13 +242,17 @@ const BANKS = [
 async function main() {
   await prisma.message.deleteMany();
   await prisma.conversation.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.favorite.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.property.deleteMany();
   await prisma.bank.deleteMany();
 
   const password = await bcrypt.hash(DEMO_PASSWORD, 10);
 
+  const users: Record<string, { id: string; role: string }> = {};
   for (const demo of DEMO_USERS) {
-    await prisma.user.upsert({
+    const user = await prisma.user.upsert({
       where: { email: demo.email },
       create: {
         email: demo.email,
@@ -234,6 +268,7 @@ async function main() {
         provider: "local",
       },
     });
+    users[demo.role] = { id: user.id, role: user.role };
   }
 
   for (const property of PROPERTIES) {
@@ -254,8 +289,120 @@ async function main() {
     await prisma.bank.create({ data: bank });
   }
 
+  const clientId = users.CLIENT.id;
+  const agencyId = users.AGENCY.id;
+  const adminId = users.ADMIN.id;
+
+  const favoriteIds = ["1", "2", "3", "5", "6"];
+  for (const propertyId of favoriteIds) {
+    await prisma.favorite.create({ data: { userId: clientId, propertyId } });
+  }
+
+  const sampleReviews = [
+    { propertyId: "1", rating: 5, comment: "Villa magnifique, quartier calme et verdoyant." },
+    { propertyId: "2", rating: 4, comment: "Bon rapport qualité/prix, un peu bruyant le soir." },
+    { propertyId: "3", rating: 5, comment: "Riad authentique, piscine superbe." },
+    { propertyId: "4", rating: 4, comment: "Vue imprenable, finitions premium." },
+    { propertyId: "5", rating: 5, comment: "Piscine et jardin exceptionnels." },
+  ];
+  for (const r of sampleReviews) {
+    await prisma.review.create({
+      data: {
+        userId: clientId,
+        propertyId: r.propertyId,
+        rating: r.rating,
+        comment: r.comment,
+      },
+    });
+    await prisma.property.update({
+      where: { id: r.propertyId },
+      data: { avgRating: r.rating, reviewCount: 1 },
+    });
+  }
+
+  const notifications = [
+    {
+      userId: clientId,
+      type: "SYSTEM" as const,
+      title: "Bienvenue",
+      message: "Explorez le catalogue et sauvegardez vos favoris.",
+      read: false,
+    },
+    {
+      userId: clientId,
+      type: "CREDIT_ALERT" as const,
+      title: "Taux CIH",
+      message: "CIH Bank propose actuellement 4,3 % sur 25 ans.",
+      read: false,
+      data: { bank: "CIH Bank" },
+    },
+    {
+      userId: clientId,
+      type: "REPORT_READY" as const,
+      title: "Rapport IA prêt",
+      message: "Votre analyse d'éligibilité est disponible.",
+      read: true,
+    },
+    {
+      userId: agencyId,
+      type: "PROPERTY_LIKED" as const,
+      title: "Nouveau favori",
+      message: "Un client a ajouté « Villa Agdal » à ses favoris.",
+      read: false,
+      data: { propertyId: "1" },
+    },
+    {
+      userId: agencyId,
+      type: "REVIEW_RECEIVED" as const,
+      title: "Nouvel avis",
+      message: "Un avis 5/5 a été publié sur « Riad Marrakech ».",
+      read: false,
+      data: { propertyId: "3" },
+    },
+    {
+      userId: agencyId,
+      type: "NEW_MESSAGE" as const,
+      title: "Nouveau message",
+      message: "Question sur la Villa Agdal.",
+      read: false,
+      data: { conversationId: "1", propertyId: "1" },
+    },
+    {
+      userId: agencyId,
+      type: "SYSTEM" as const,
+      title: "Bibliothèque 3D",
+      message: "Pensez à uploader vos maquettes pour les visites immersives.",
+      read: true,
+    },
+    {
+      userId: adminId,
+      type: "SYSTEM" as const,
+      title: "Seed OK",
+      message: "Données de démonstration chargées.",
+      read: false,
+    },
+    {
+      userId: clientId,
+      type: "SYSTEM" as const,
+      title: "Carte disponible",
+      message: "Visualisez les biens sur la carte interactive.",
+      read: true,
+    },
+    {
+      userId: agencyId,
+      type: "CREDIT_ALERT" as const,
+      title: "Marché crédit",
+      message: "Les taux immobiliers restent favorables ce mois-ci.",
+      read: true,
+    },
+  ];
+
+  for (const n of notifications) {
+    await prisma.notification.create({ data: n });
+  }
+
   console.log(
-    `Seeded ${DEMO_USERS.length} users, ${PROPERTIES.length} properties, ${CONVERSATIONS.length} conversations, ${BANKS.length} banks.`,
+    `Seeded ${DEMO_USERS.length} users, ${PROPERTIES.length} properties, ${CONVERSATIONS.length} conversations, ${BANKS.length} banks, ${favoriteIds.length} favorites, ${sampleReviews.length} reviews, ${notifications.length} notifications.`,
   );
   console.log("Demo accounts (password: demo1234):");
   for (const u of DEMO_USERS) {

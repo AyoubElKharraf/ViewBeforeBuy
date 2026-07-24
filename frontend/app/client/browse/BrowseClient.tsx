@@ -1,216 +1,419 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Star, MapPin, Search, Loader2, Move3d } from "lucide-react";
-import { ApiError, createCheckout, getToken, type Property } from "@/lib/api";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { GitCompare, MapPin, Search, Star, X } from "lucide-react";
+import { searchProperties, type Property, type SearchParams } from "@/lib/api";
 import { formatPrice } from "@/utils/types";
-import Property3DModal from "@/components/Property3DModal";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { useComparator } from "@/hooks/useComparator";
 
 const TYPES = ["Tous", "Villa", "Appartement", "Riad", "Duplex"] as const;
 
-export default function BrowseClient({ properties }: { properties: Property[] }) {
+export default function BrowseClient() {
   return (
-    <Suspense fallback={<div className="text-sm text-[color:var(--color-client-text-muted)]">Chargement…</div>}>
-      <BrowseClientInner properties={properties} />
+    <Suspense fallback={<div className="text-sm opacity-60">Chargement…</div>}>
+      <BrowseInner />
     </Suspense>
   );
 }
 
-function BrowseClientInner({ properties }: { properties: Property[] }) {
+function BrowseInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get("q") ?? "");
-  const [type, setType] = useState<string>("Tous");
-  const [city, setCity] = useState("Toutes");
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [view3d, setView3d] = useState<Property | null>(null);
+  const { toggle, isSelected } = useComparator();
 
-  const cities = useMemo(() => {
-    const set = new Set(properties.map((p) => p.city).filter(Boolean));
-    return ["Toutes", ...Array.from(set).sort()];
-  }, [properties]);
+  const [filters, setFilters] = useState<SearchParams>(() => ({
+    city: searchParams.get("city") ?? undefined,
+    type: searchParams.get("type") ?? undefined,
+    minPrice: num(searchParams.get("minPrice")),
+    maxPrice: num(searchParams.get("maxPrice")),
+    minSuperficie: num(searchParams.get("minSuperficie")),
+    maxSuperficie: num(searchParams.get("maxSuperficie")),
+    rooms: num(searchParams.get("rooms")),
+    hasPool: searchParams.get("hasPool") === "true" || undefined,
+    hasGarden: searchParams.get("hasGarden") === "true" || undefined,
+    hasParking: searchParams.get("hasParking") === "true" || undefined,
+    page: num(searchParams.get("page")) ?? 1,
+    pageSize: 12,
+  }));
+  const [q, setQ] = useState(searchParams.get("q") ?? "");
+  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<{ properties: Property[]; total: number }>({
+    properties: [],
+    total: 0,
+  });
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return properties.filter((p) => {
-      if (type !== "Tous" && p.type !== type) return false;
-      if (city !== "Toutes" && p.city !== city) return false;
-      if (!q) return true;
-      return (
-        p.name.toLowerCase().includes(q) ||
-        p.city.toLowerCase().includes(q) ||
-        p.neighborhood.toLowerCase().includes(q) ||
-        p.type.toLowerCase().includes(q)
-      );
-    });
-  }, [properties, query, type, city]);
-
-  async function handleReserve(propertyId: string) {
-    setError(null);
-    if (!getToken()) {
-      setError("Connectez-vous pour réserver un bien.");
-      return;
-    }
-    setPendingId(propertyId);
+  const runSearch = useCallback(async (f: SearchParams) => {
+    setLoading(true);
     try {
-      const { url } = await createCheckout({ propertyId });
-      if (url) {
-        window.location.href = url;
-      } else {
-        setError("Impossible de démarrer le paiement.");
+      const res = await searchProperties(f);
+      let props = res.properties;
+      if (q.trim()) {
+        const needle = q.trim().toLowerCase();
+        props = props.filter(
+          (p) =>
+            p.name.toLowerCase().includes(needle) ||
+            p.city.toLowerCase().includes(needle) ||
+            p.neighborhood.toLowerCase().includes(needle),
+        );
       }
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Erreur lors de la création du paiement.",
-      );
+      setResult({ properties: props, total: q.trim() ? props.length : res.total });
+    } catch {
+      setResult({ properties: [], total: 0 });
     } finally {
-      setPendingId(null);
+      setLoading(false);
     }
+  }, [q]);
+
+  useEffect(() => {
+    void runSearch(filters);
+  }, [filters, runSearch]);
+
+  function applyAndSync(next: SearchParams) {
+    setFilters(next);
+    const params = new URLSearchParams();
+    Object.entries(next).forEach(([k, v]) => {
+      if (v === undefined || v === null || v === "" || v === false) return;
+      if (k === "pageSize") return;
+      params.set(k, String(v));
+    });
+    if (q) params.set("q", q);
+    router.replace(`/client/browse?${params.toString()}`);
   }
 
+  const chips = useMemo(() => {
+    const list: { key: string; label: string; clear: () => void }[] = [];
+    if (filters.type && filters.type !== "Tous")
+      list.push({
+        key: "type",
+        label: filters.type,
+        clear: () => applyAndSync({ ...filters, type: undefined }),
+      });
+    if (filters.city)
+      list.push({
+        key: "city",
+        label: filters.city,
+        clear: () => applyAndSync({ ...filters, city: undefined }),
+      });
+    if (filters.minPrice != null || filters.maxPrice != null)
+      list.push({
+        key: "price",
+        label: `Prix ${filters.minPrice ?? 0}–${filters.maxPrice ?? "∞"}`,
+        clear: () => applyAndSync({ ...filters, minPrice: undefined, maxPrice: undefined }),
+      });
+    if (filters.minSuperficie != null || filters.maxSuperficie != null)
+      list.push({
+        key: "superficie",
+        label: `m² ${filters.minSuperficie ?? 0}–${filters.maxSuperficie ?? "∞"}`,
+        clear: () =>
+          applyAndSync({ ...filters, minSuperficie: undefined, maxSuperficie: undefined }),
+      });
+    if (filters.rooms != null)
+      list.push({
+        key: "rooms",
+        label: `${filters.rooms}+ pièces`,
+        clear: () => applyAndSync({ ...filters, rooms: undefined }),
+      });
+    if (filters.hasPool)
+      list.push({
+        key: "pool",
+        label: "Piscine",
+        clear: () => applyAndSync({ ...filters, hasPool: undefined }),
+      });
+    if (filters.hasGarden)
+      list.push({
+        key: "garden",
+        label: "Jardin",
+        clear: () => applyAndSync({ ...filters, hasGarden: undefined }),
+      });
+    if (filters.hasParking)
+      list.push({
+        key: "parking",
+        label: "Parking",
+        clear: () => applyAndSync({ ...filters, hasParking: undefined }),
+      });
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-3xl font-semibold" style={{ fontFamily: "var(--font-serif)" }}>
-          Tous les biens
+          Catalogue
         </h1>
         <p className="text-sm text-[color:var(--color-client-text-muted)] mt-1">
-          {filtered.length} bien{filtered.length !== 1 ? "s" : ""} trouvé
-          {filtered.length !== 1 ? "s" : ""}
+          {loading ? "Recherche…" : `${result.total} bien${result.total !== 1 ? "s" : ""}`}
         </p>
       </div>
 
-      <div className="client-card rounded-2xl p-4 space-y-3">
-        <div className="flex items-center gap-3">
-          <Search className="w-5 h-5 text-[color:var(--color-client-text-muted)] shrink-0" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher par nom, ville, quartier…"
-            className="flex-1 bg-transparent focus:outline-none text-sm text-[color:var(--color-client-text)] placeholder:text-[color:var(--color-client-text-muted)]"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {TYPES.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setType(t)}
-              className={`px-3 py-1.5 rounded-lg text-xs border transition ${
-                type === t
-                  ? "bg-[color:var(--color-client-gold)] text-white border-transparent"
-                  : "border-[color:var(--color-client-border)] text-[color:var(--color-client-text-muted)]"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {cities.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCity(c)}
-              className={`px-3 py-1.5 rounded-lg text-xs border transition ${
-                city === c
-                  ? "bg-[color:var(--color-client-gold)]/15 text-[color:var(--color-client-gold)] border-[color:var(--color-client-gold)]/40"
-                  : "border-[color:var(--color-client-border)] text-[color:var(--color-client-text-muted)]"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {error && <p className="text-sm text-red-500">{error}</p>}
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {filtered.length === 0 ? (
-          <div className="sm:col-span-2 client-card rounded-2xl p-8 text-center text-sm text-[color:var(--color-client-text-muted)]">
-            Aucun bien ne correspond à vos filtres.
+      <div className="lg:grid lg:grid-cols-[240px_1fr] gap-4 space-y-4 lg:space-y-0">
+        <aside className="client-card rounded-2xl p-4 space-y-4 h-fit lg:sticky lg:top-20">
+          <div className="flex items-center gap-2">
+            <Search className="w-4 h-4 opacity-50" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Mot-clé…"
+              className="flex-1 bg-transparent text-sm focus:outline-none"
+            />
           </div>
-        ) : (
-          filtered.map((p) => (
-            <article key={p.id} className="client-card rounded-2xl overflow-hidden flex flex-col">
-              <div
-                className="aspect-video flex items-center justify-center text-4xl overflow-hidden"
-                style={{
-                  background: "linear-gradient(135deg, oklch(0.88 0.03 65), oklch(0.82 0.04 70))",
-                }}
-              >
-                {p.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-                ) : (
-                  "🏠"
-                )}
-              </div>
-              <div className="p-4 flex flex-col flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{p.name}</div>
-                    <div className="flex items-center gap-1 text-xs text-[color:var(--color-client-text-muted)] mt-0.5">
-                      <MapPin className="w-3 h-3 shrink-0" />
-                      {p.city} · {p.neighborhood}
-                    </div>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--color-client-gold)]/15 text-[color:var(--color-client-gold)] shrink-0">
-                    {p.type}
-                  </span>
-                </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Type</div>
+            <div className="flex flex-wrap gap-1.5">
+              {TYPES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() =>
+                    applyAndSync({
+                      ...filters,
+                      type: t === "Tous" ? undefined : t,
+                      page: 1,
+                    })
+                  }
+                  className={`px-2.5 py-1 rounded-lg text-xs border ${
+                    (filters.type ?? "Tous") === t
+                      ? "bg-[color:var(--color-client-gold)] text-white border-transparent"
+                      : "border-[color:var(--color-client-border)]"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <Field
+            label="Ville"
+            value={filters.city ?? ""}
+            onChange={(v) => applyAndSync({ ...filters, city: v || undefined, page: 1 })}
+            placeholder="Casablanca…"
+          />
+          <Range
+            label="Prix min"
+            value={filters.minPrice ?? 0}
+            onChange={(v) => applyAndSync({ ...filters, minPrice: v || undefined, page: 1 })}
+            max={10000000}
+            step={50000}
+          />
+          <Range
+            label="Prix max"
+            value={filters.maxPrice ?? 10000000}
+            onChange={(v) => applyAndSync({ ...filters, maxPrice: v || undefined, page: 1 })}
+            max={10000000}
+            step={50000}
+          />
+          <Range
+            label="Pièces min"
+            value={filters.rooms ?? 0}
+            onChange={(v) => applyAndSync({ ...filters, rooms: v || undefined, page: 1 })}
+            max={10}
+            step={1}
+          />
+          <Range
+            label="Superficie min (m²)"
+            value={filters.minSuperficie ?? 0}
+            onChange={(v) =>
+              applyAndSync({ ...filters, minSuperficie: v || undefined, page: 1 })
+            }
+            max={1000}
+            step={10}
+          />
+          <Range
+            label="Superficie max (m²)"
+            value={filters.maxSuperficie ?? 1000}
+            onChange={(v) =>
+              applyAndSync({ ...filters, maxSuperficie: v || undefined, page: 1 })
+            }
+            max={1000}
+            step={10}
+          />
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(filters.hasPool)}
+              onChange={(e) =>
+                applyAndSync({ ...filters, hasPool: e.target.checked || undefined, page: 1 })
+              }
+            />
+            Piscine
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(filters.hasGarden)}
+              onChange={(e) =>
+                applyAndSync({ ...filters, hasGarden: e.target.checked || undefined, page: 1 })
+              }
+            />
+            Jardin
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(filters.hasParking)}
+              onChange={(e) =>
+                applyAndSync({ ...filters, hasParking: e.target.checked || undefined, page: 1 })
+              }
+            />
+            Parking
+          </label>
+          <button
+            type="button"
+            onClick={() => void runSearch(filters)}
+            className="w-full py-2 rounded-lg bg-[color:var(--color-client-gold)] text-white text-sm"
+          >
+            Rechercher
+          </button>
+        </aside>
 
-                <div className="flex items-center justify-between mt-3">
-                  <div className="text-base font-semibold">{formatPrice(p.price)}</div>
-                  <div className="flex items-center gap-1 text-xs">
-                    <Star className="w-3 h-3 fill-[color:var(--color-client-gold)] text-[color:var(--color-client-gold)]" />
-                    {p.locationScore}
-                  </div>
-                </div>
+        <div className="space-y-3">
+          {chips.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {chips.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={c.clear}
+                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[color:var(--color-client-gold)]/15"
+                >
+                  {c.label} <X className="w-3 h-3" />
+                </button>
+              ))}
+            </div>
+          )}
 
-                <div className="text-xs text-[color:var(--color-client-text-muted)] mt-1">
-                  {p.rooms} pièces · {p.superficie} m² · {p.bathrooms} SDB
-                </div>
-
-                <div className="mt-auto pt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setView3d(p)}
-                    className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-lg border border-[color:var(--color-client-border)] text-sm hover:bg-black/5"
-                  >
-                    <Move3d className="w-4 h-4" /> 3D
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleReserve(p.id)}
-                    disabled={pendingId === p.id}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[color:var(--color-client-gold)] text-white text-sm hover:brightness-110 disabled:opacity-60"
-                  >
-                    {pendingId === p.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Redirection…
-                      </>
+          {loading ? (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="client-card rounded-2xl h-64 animate-pulse bg-black/5" />
+              ))}
+            </div>
+          ) : result.properties.length === 0 ? (
+            <div className="client-card rounded-2xl p-10 text-center text-sm opacity-60">
+              Aucun résultat pour ces filtres.
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {result.properties.map((p) => (
+                <article key={p.id} className="client-card rounded-2xl overflow-hidden flex flex-col">
+                  <Link href={`/client/properties/${p.id}`} className="aspect-video relative bg-black/5">
+                    {p.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
                     ) : (
-                      "Réserver"
+                      <div className="w-full h-full flex items-center justify-center text-3xl">🏠</div>
                     )}
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))
-        )}
+                    <div className="absolute top-2 right-2">
+                      <FavoriteButton propertyId={p.id} />
+                    </div>
+                  </Link>
+                  <div className="p-3 flex-1 flex flex-col">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link href={`/client/properties/${p.id}`} className="font-medium truncate">
+                        {p.name}
+                      </Link>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[color:var(--color-client-gold)]/15 shrink-0">
+                        {p.type}
+                      </span>
+                    </div>
+                    <div className="text-xs opacity-60 flex items-center gap-1 mt-0.5">
+                      <MapPin className="w-3 h-3" /> {p.city}
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="font-semibold text-sm">{formatPrice(p.price)}</div>
+                      {p.avgRating != null && (
+                        <span className="inline-flex items-center gap-1 text-xs">
+                          <Star className="w-3 h-3 fill-[color:var(--color-client-gold)] text-[color:var(--color-client-gold)]" />
+                          {p.avgRating.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs opacity-50 mt-1">
+                      {p.rooms} pièces · {p.superficie} m²
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggle(p.id)}
+                      className={`mt-3 text-xs inline-flex items-center justify-center gap-1 py-2 rounded-lg border ${
+                        isSelected(p.id)
+                          ? "border-[color:var(--color-client-gold)] text-[color:var(--color-client-gold)]"
+                          : "border-[color:var(--color-client-border)]"
+                      }`}
+                    >
+                      <GitCompare className="w-3.5 h-3.5" />
+                      {isSelected(p.id) ? "Sélectionné" : "Comparer"}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-
-      <Property3DModal
-        open={view3d !== null}
-        onClose={() => setView3d(null)}
-        propertyName={view3d?.name ?? ""}
-        accent="#c9a227"
-      />
     </div>
+  );
+}
+
+function num(v: string | null): number | undefined {
+  if (v == null || v === "") return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block text-sm">
+      <span className="text-xs opacity-50">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="mt-1 w-full rounded-lg border border-[color:var(--color-client-border)] bg-white/60 px-2 py-1.5 text-sm"
+      />
+    </label>
+  );
+}
+
+function Range({
+  label,
+  value,
+  onChange,
+  max,
+  step,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  max: number;
+  step: number;
+}) {
+  return (
+    <label className="block text-sm">
+      <span className="text-xs opacity-50 flex justify-between">
+        {label} <span>{value}</span>
+      </span>
+      <input
+        type="range"
+        min={0}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-[color:var(--color-client-gold)]"
+      />
+    </label>
   );
 }

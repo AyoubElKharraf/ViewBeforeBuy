@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth";
+import { NotificationBell } from "@/components/NotificationBell";
 
 function initials(name: string | null, email: string): string {
   if (name && name.trim()) {
@@ -152,7 +153,8 @@ function AgencyLayoutInner({ children }: { children: React.ReactNode }) {
             Paramètres
           </Link>
           <div className="flex-1" />
-          <div className="flex items-center gap-2 text-xs text-white/70">
+          <NotificationBell accent="agency" />
+          <div className="flex items-center gap-2 text-xs text-white/70 ml-2">
             <Circle className="w-2 h-2 fill-emerald-400 text-emerald-400" />
             Assistant en ligne
           </div>

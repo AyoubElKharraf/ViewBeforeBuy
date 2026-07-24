@@ -67,6 +67,13 @@ export type Property = {
   status: string;
   description: string;
   imageUrl?: string | null;
+  hasPool?: boolean;
+  hasGarden?: boolean;
+  hasParking?: boolean;
+  lat?: number | null;
+  lng?: number | null;
+  avgRating?: number | null;
+  reviewCount?: number;
 };
 
 export type ConversationMessage = {
@@ -280,4 +287,135 @@ export function aiScoreEligibility(input: {
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+// ─── Recherche / carte / comparateur ─────────────────────────────────────────
+
+export type SearchParams = {
+  city?: string;
+  type?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minSuperficie?: number;
+  maxSuperficie?: number;
+  rooms?: number;
+  hasPool?: boolean;
+  hasGarden?: boolean;
+  hasParking?: boolean;
+  page?: number;
+  pageSize?: number;
+};
+
+export type SearchResult = {
+  properties: Property[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export function searchProperties(filters: SearchParams = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v === undefined || v === null || v === "") return;
+    params.set(k, String(v));
+  });
+  const qs = params.toString();
+  return request<SearchResult>(`/api/properties/search${qs ? `?${qs}` : ""}`);
+}
+
+export type MapProperty = Pick<
+  Property,
+  "id" | "name" | "price" | "type" | "city" | "lat" | "lng" | "imageUrl" | "avgRating" | "reviewCount"
+>;
+
+export function getMapProperties() {
+  return request<MapProperty[]>("/api/properties/map");
+}
+
+export type CompareProperty = Property & {
+  estimatedMonthly: number;
+  loanAmount: number;
+};
+
+export function compareProperties(propertyIds: string[]) {
+  return request<{ properties: CompareProperty[] }>("/api/properties/compare", {
+    method: "POST",
+    body: JSON.stringify({ propertyIds }),
+  });
+}
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+export type AppNotification = {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  data?: Record<string, unknown> | null;
+  createdAt: string;
+};
+
+export function getNotifications(page = 1, pageSize = 20) {
+  return request<{
+    items: AppNotification[];
+    total: number;
+    unreadCount: number;
+    page: number;
+    pageSize: number;
+  }>(`/api/notifications?page=${page}&pageSize=${pageSize}`);
+}
+
+export function markNotificationRead(id: string) {
+  return request<AppNotification>(`/api/notifications/${id}/read`, { method: "PATCH" });
+}
+
+export function markAllNotificationsRead() {
+  return request<{ ok: boolean }>("/api/notifications/read-all", { method: "PATCH" });
+}
+
+export function deleteNotification(id: string) {
+  return request<{ ok: boolean }>(`/api/notifications/${id}`, { method: "DELETE" });
+}
+
+// ─── Favoris ─────────────────────────────────────────────────────────────────
+
+export function toggleFavorite(propertyId: string) {
+  return request<{ favorited: boolean }>(`/api/favorites/${propertyId}`, { method: "POST" });
+}
+
+export function getFavorites() {
+  return request<Property[]>("/api/favorites");
+}
+
+export function getFavoriteStatus(propertyId: string) {
+  return request<{ favorited: boolean }>(`/api/favorites/${propertyId}/status`);
+}
+
+// ─── Avis ────────────────────────────────────────────────────────────────────
+
+export type Review = {
+  id: string;
+  userId: string;
+  propertyId: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  user: { id: string; name: string | null; avatar: string | null };
+};
+
+export function getReviews(propertyId: string) {
+  return request<Review[]>(`/api/reviews/${propertyId}`);
+}
+
+export function upsertReview(propertyId: string, input: { rating: number; comment?: string }) {
+  return request<Review>(`/api/reviews/${propertyId}`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteReview(id: string) {
+  return request<{ ok: boolean }>(`/api/reviews/${id}`, { method: "DELETE" });
 }

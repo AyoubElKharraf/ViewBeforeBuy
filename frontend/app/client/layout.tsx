@@ -3,9 +3,21 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, Building, FileText, CreditCard, Sparkles, Bell, LogOut } from "lucide-react";
+import {
+  Home,
+  Building,
+  FileText,
+  CreditCard,
+  Sparkles,
+  LogOut,
+  Heart,
+  Map,
+} from "lucide-react";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useAuth } from "@/lib/auth";
+import { NotificationBell } from "@/components/NotificationBell";
+import { CompareBar } from "@/components/CompareBar";
+import { useFavorites } from "@/hooks/useFavorites";
 
 function initials(name: string | null, email: string): string {
   if (name && name.trim()) {
@@ -23,16 +35,17 @@ type NavItem = { href: string; label: string; icon: typeof Home; exact?: boolean
 
 const NAV: NavItem[] = [
   { href: "/client", label: "Accueil", icon: Home, exact: true },
-  { href: "/client/simulator", label: "Crédits", icon: CreditCard },
-  { href: "/client/score", label: "Éligibilité", icon: FileText },
-  { href: "/client/ai-assistant", label: "IA", icon: Sparkles },
   { href: "/client/browse", label: "Biens", icon: Building },
+  { href: "/client/map", label: "Carte", icon: Map },
+  { href: "/client/favorites", label: "Favoris", icon: Heart },
+  { href: "/client/simulator", label: "Crédits", icon: CreditCard },
 ];
 
 function ClientLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { count: favCount } = useFavorites();
 
   function handleLogout() {
     logout();
@@ -40,9 +53,9 @@ function ClientLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen client-surface pb-24">
+    <div className="min-h-screen client-surface pb-28">
       <header className="sticky top-0 z-30 bg-[color:var(--color-client-bg)]/80 backdrop-blur-md border-b border-[color:var(--color-client-border)]">
-        <div className="max-w-3xl mx-auto px-5 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-5 h-16 flex items-center justify-between">
           <Link
             href="/"
             className="text-lg font-semibold"
@@ -50,10 +63,20 @@ function ClientLayoutInner({ children }: { children: React.ReactNode }) {
           >
             <span className="text-[color:var(--color-client-gold)]">ViewBeforeBuy</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <button className="w-9 h-9 rounded-full client-card flex items-center justify-center">
-              <Bell className="w-4 h-4 text-[color:var(--color-client-text)]" />
-            </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/client/score"
+              className="hidden sm:inline-flex text-xs opacity-60 hover:opacity-100 items-center gap-1 px-2"
+            >
+              <FileText className="w-3.5 h-3.5" /> Éligibilité
+            </Link>
+            <Link
+              href="/client/ai-assistant"
+              className="hidden sm:inline-flex text-xs opacity-60 hover:opacity-100 items-center gap-1 px-2"
+            >
+              <Sparkles className="w-3.5 h-3.5" /> IA
+            </Link>
+            <NotificationBell accent="client" />
             <div
               className="w-9 h-9 rounded-full bg-[color:var(--color-client-gold)] text-white flex items-center justify-center text-xs font-semibold"
               title={user?.email ?? ""}
@@ -76,27 +99,33 @@ function ClientLayoutInner({ children }: { children: React.ReactNode }) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="max-w-3xl mx-auto px-5 py-6"
+        className="max-w-5xl mx-auto px-5 py-6"
       >
         {children}
       </motion.main>
 
-      <nav className="fixed bottom-0 inset-x-0 border-t border-[color:var(--color-client-border)] bg-[color:var(--color-client-bg)]/95 backdrop-blur-md">
-        <div className="max-w-3xl mx-auto grid grid-cols-5">
+      <CompareBar />
+
+      <nav className="fixed bottom-0 inset-x-0 border-t border-[color:var(--color-client-border)] bg-[color:var(--color-client-bg)]/95 backdrop-blur-md z-30">
+        <div className="max-w-5xl mx-auto grid grid-cols-5">
           {NAV.map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            const label =
+              item.href === "/client/favorites" && favCount > 0
+                ? `Favoris (${favCount})`
+                : item.label;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 py-3 text-xs transition ${
+                className={`flex flex-col items-center gap-1 py-3 text-[10px] sm:text-xs transition ${
                   active
                     ? "text-[color:var(--color-client-gold)]"
                     : "text-[color:var(--color-client-text-muted)]"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
-                {item.label}
+                {label}
               </Link>
             );
           })}

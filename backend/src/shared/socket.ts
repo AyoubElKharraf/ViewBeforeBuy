@@ -16,6 +16,12 @@ export function initSocket(httpServer: HttpServer): Server {
   io.on("connection", (socket) => {
     logger.debug(`Socket connecté: ${socket.id}`);
 
+    socket.on("user:join", (userId: string) => {
+      if (typeof userId === "string" && userId.length > 0) {
+        socket.join(`user:${userId}`);
+      }
+    });
+
     socket.on("conversation:join", (conversationId: string) => {
       if (typeof conversationId === "string" && conversationId.length > 0) {
         socket.join(`conversation:${conversationId}`);
@@ -44,4 +50,9 @@ export function getIO(): Server | null {
 /** Diffuse un nouveau message à tous les clients d'une conversation. */
 export function emitNewMessage(conversationId: string, message: unknown): void {
   io?.to(`conversation:${conversationId}`).emit("message:new", { conversationId, message });
+}
+
+/** Diffuse une notification à l'utilisateur ciblé. */
+export function emitNotification(userId: string, notification: unknown): void {
+  io?.to(`user:${userId}`).emit("notification:new", notification);
 }
